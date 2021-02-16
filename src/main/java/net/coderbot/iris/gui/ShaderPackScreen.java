@@ -4,6 +4,9 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.coderbot.iris.Iris;
 import net.coderbot.iris.gui.element.ShaderPackListWidget;
 import net.coderbot.iris.gui.element.PropertyDocumentWidget;
+import net.coderbot.iris.gui.property.*;
+import net.coderbot.iris.shaderpack.Option;
+import net.coderbot.iris.shaderpack.ShaderPackConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.screen.Screen;
@@ -105,11 +108,12 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
         String name = "(internal)";
         if(entry != null) name = entry.getPackName();
         Iris.getIrisConfig().setShaderPackName(name);
-        try {
-            Iris.reload();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.shaderProperties.saveProperties();
+		try {
+			Iris.reload();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
         this.reloadShaderConfig();
     }
 
@@ -123,8 +127,52 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
             scrollAmount = (float)this.shaderProperties.getScrollAmount() / this.shaderProperties.getMaxScroll();
             page = this.shaderProperties.getCurrentPage();
         }
-
+		if(shaderProperties != null) this.shaderProperties.saveProperties();
         this.shaderProperties = new PropertyDocumentWidget(this.client, this.width / 2, this.height, 32, this.height - 58, this.width / 2, this.width, 26);
+        shaderProperties.onSave(() -> {
+			ShaderPackConfig config = Iris.getCurrentPack().getConfig();
+        	for(String p : shaderProperties.getPages()) {
+				PropertyList l = shaderProperties.getPage(p);
+				l.forEvery(property -> {
+					if(property instanceof OptionProperty) {
+						String key = ((OptionProperty<?>)property).getKey();
+						config.getConfigProperties().setProperty(key, ((OptionProperty<?>)property).getValue().toString());
+					}
+				});
+			}
+			try {
+				config.save();
+				config.load();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
+		shaderProperties.onLoad(() -> {
+			ShaderPackConfig config = Iris.getCurrentPack().getConfig();
+			for(String p : shaderProperties.getPages()) {
+				PropertyList l = shaderProperties.getPage(p);
+				l.forEvery(property -> {
+					if(property instanceof OptionProperty) {
+						String key = ((OptionProperty<?>)property).getKey();
+						if(property instanceof IntOptionProperty) {
+							Option<Integer> opt = config.getIntegerOptions().get(key);
+							if(opt != null) ((IntOptionProperty)property).setValue(opt.getValue());
+						} else if(property instanceof FloatOptionProperty) {
+							Option<Float> opt = config.getFloatOptions().get(key);
+							if(opt != null) ((FloatOptionProperty)property).setValue(opt.getValue());
+						} else if(property instanceof BooleanOptionProperty) {
+							Option<Boolean> opt = config.getBooleanOptions().get(key);
+							if(opt != null) ((BooleanOptionProperty)property).setValue(opt.getValue());
+						}
+					}
+				});
+			}
+			try {
+				config.save();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
         if(this.client.world != null) this.shaderProperties.method_31322(false);
         this.reloadShaderConfig();
 
@@ -136,6 +184,7 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
 
     private void reloadShaderConfig() {
         this.shaderProperties.setDocument(PropertyDocumentWidget.createShaderpackConfigDocument(this.client.textRenderer, this.width / 2, Iris.getIrisConfig().getShaderPackName(), Iris.getCurrentPack(), this.shaderProperties), "screen");
+    	shaderProperties.loadProperties();
     }
 
 	@Override

@@ -4,7 +4,9 @@ import com.google.common.collect.ImmutableList;
 import net.coderbot.iris.Iris;
 import net.coderbot.iris.gui.GuiUtil;
 import net.coderbot.iris.gui.property.*;
+import net.coderbot.iris.shaderpack.Option;
 import net.coderbot.iris.shaderpack.ShaderPack;
+import net.coderbot.iris.shaderpack.ShaderPackConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.screen.TickableElement;
@@ -94,7 +96,8 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
     }
 
     public static Map<String, PropertyList> createShaderpackConfigDocument(TextRenderer tr, int width, String shaderName, ShaderPack pack, PropertyDocumentWidget widget) {
-        Properties shaderProperties = pack.getShaderProperties();
+        Properties shaderProperties = pack.getShaderProperties().asProperties();
+		ShaderPackConfig config = pack.getConfig();
         Map<String, PropertyList> document = new HashMap<>();
         Map<String, String> child2Parent = new HashMap<>();
         int tw = (int)(width * 0.6) - 21;
@@ -131,7 +134,21 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
                         page.add(new LinkProperty(widget, a, GuiUtil.trimmed(tr, a, bw, true, true), LinkProperty.Align.LEFT));
                         child2Parent.put(a, s);
                     } else {
-                        page.add(new StringOptionProperty(ImmutableList.of("This", "Is", "Not", "Functional"), 0, widget, p, GuiUtil.trimmed(tr, "option."+p, tw, true, true), sliderOptions.contains(p), false));
+                        //page.add(new StringOptionProperty(ImmutableList.of("This", "Is", "Not", "Functional"), 0, widget, p, GuiUtil.trimmed(tr, "option."+p, tw, true, true), sliderOptions.contains(p), false));
+						Option<Integer> intOption = config.getIntegerOptions().get(p);
+						Option<Float> floatOption = config.getFloatOptions().get(p);
+						Option<Boolean> boolOption = config.getBooleanOptions().get(p);
+						if(intOption != null) {
+							List<Integer> vals = intOption.getAllowedValues();
+							page.add(new IntOptionProperty(vals, vals.indexOf(intOption.getDefaultValue()), widget, p, GuiUtil.trimmed(tr, "option."+p, tw, true, true), sliderOptions.contains(p)));
+						} else if(floatOption != null) {
+							List<Float> vals = floatOption.getAllowedValues();
+							page.add(new FloatOptionProperty(vals, vals.indexOf(floatOption.getDefaultValue()), widget, p, GuiUtil.trimmed(tr, "option."+p, tw, true, true), sliderOptions.contains(p)));
+						} else if(boolOption != null) {
+							page.add(new BooleanOptionProperty(widget, boolOption.getDefaultValue(), p, GuiUtil.trimmed(tr, "option."+p, tw, true, true), sliderOptions.contains(p)));
+						} else {
+							page.add(new Property(GuiUtil.trimmed(tr, "option."+p, tw, true, true)));
+						}
                     }
                 }
                 document.put(s, page);
