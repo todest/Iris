@@ -13,7 +13,12 @@ public class FloatOptionProperty extends OptionProperty<Float> {
         super(values, defaultIndex, document, key, label, isSlider);
     }
 
-    @Override
+	@Override
+	protected Float fallbackValue() {
+		return 0f;
+	}
+
+	@Override
     public Text createValueText(int width) {
         return GuiUtil.trimmed(MinecraftClient.getInstance().textRenderer, Float.toString(this.getValue()), width, false, true, isDefault() ? Formatting.RESET : Formatting.YELLOW);
     }

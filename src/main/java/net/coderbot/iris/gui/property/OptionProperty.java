@@ -32,6 +32,8 @@ public abstract class OptionProperty<T> extends ValueProperty<T> {
 
     @Override
     public T getValue() {
+    	if(values.size() == 0) return fallbackValue();
+    	index = Math.max(0, Math.min(index, values.size() - 1));
         return values.get(index);
     }
 
@@ -107,4 +109,6 @@ public abstract class OptionProperty<T> extends ValueProperty<T> {
     public boolean isDefault() {
         return index == defaultIndex;
     }
+
+    protected abstract T fallbackValue();
 }

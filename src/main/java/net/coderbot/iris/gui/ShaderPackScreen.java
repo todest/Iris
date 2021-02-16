@@ -155,13 +155,13 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
 					if(property instanceof OptionProperty) {
 						String key = ((OptionProperty<?>)property).getKey();
 						if(property instanceof IntOptionProperty) {
-							Option<Integer> opt = config.getIntegerOptions().get(key);
+							Option<Integer> opt = config.getIntegerOption(key);
 							if(opt != null) ((IntOptionProperty)property).setValue(opt.getValue());
 						} else if(property instanceof FloatOptionProperty) {
-							Option<Float> opt = config.getFloatOptions().get(key);
+							Option<Float> opt = config.getFloatOption(key);
 							if(opt != null) ((FloatOptionProperty)property).setValue(opt.getValue());
 						} else if(property instanceof BooleanOptionProperty) {
-							Option<Boolean> opt = config.getBooleanOptions().get(key);
+							Option<Boolean> opt = config.getBooleanOption(key);
 							if(opt != null) ((BooleanOptionProperty)property).setValue(opt.getValue());
 						}
 					}

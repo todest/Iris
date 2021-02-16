@@ -17,9 +17,9 @@ public class ShaderPackConfig {
 	private final Properties configProperties;
 	private final String comment;
 
-	private final Set<Option<Boolean>> booleanOptions = new HashSet<>();
-	private final Set<Option<Float>> floatOptions = new HashSet<>();
-	private final Set<Option<Integer>> integerOptions = new HashSet<>();
+	private final Map<String, Option<Boolean>> booleanOptions = new HashMap<>();
+	private final Map<String, Option<Float>> floatOptions = new HashMap<>();
+	private final Map<String, Option<Integer>> integerOptions = new HashMap<>();
 
 	public ShaderPackConfig(String name) {
 		//optifine uses txt files, so we should do the same
@@ -33,28 +33,40 @@ public class ShaderPackConfig {
 	}
 
 	//this 3 methods below should be used by the gui to get the available options and then use them
-	public Iterable<Option<Boolean>> getBooleanOptions() {
-		return booleanOptions;
+	public Iterable<String> getBooleanOptions() {
+		return booleanOptions.keySet();
 	}
 
-	public Iterable<Option<Float>> getFloatOptions() {
-		return floatOptions;
+	public Iterable<String> getFloatOptions() {
+		return floatOptions.keySet();
 	}
 
-	public Iterable<Option<Integer>> getIntegerOptions() {
-		return integerOptions;
+	public Iterable<String> getIntegerOptions() {
+		return integerOptions.keySet();
 	}
 
-	void addBooleanOption(Option<Boolean> option) {
-		booleanOptions.add(option);
+	public Option<Boolean> getBooleanOption(String key) {
+		return booleanOptions.get(key);
 	}
 
-	void addIntegerOption(Option<Integer> option) {
-		integerOptions.add(option);
+	public Option<Float> getFloatOption(String key) {
+		return floatOptions.get(key);
 	}
 
-	void addFloatOption(Option<Float> option) {
-		floatOptions.add(option);
+	public Option<Integer> getIntegerOption(String key) {
+		return integerOptions.get(key);
+	}
+
+	void addBooleanOption(String key, Option<Boolean> option) {
+		booleanOptions.put(key, option);
+	}
+
+	void addIntegerOption(String key, Option<Integer> option) {
+		integerOptions.put(key, option);
+	}
+
+	void addFloatOption(String key, Option<Float> option) {
+		floatOptions.put(key, option);
 	}
 
 	/**

@@ -13,7 +13,12 @@ public class IntOptionProperty extends OptionProperty<Integer> {
         super(values, defaultIndex, document, key, label, isSlider);
     }
 
-    @Override
+	@Override
+	protected Integer fallbackValue() {
+		return 0;
+	}
+
+	@Override
     public Text createValueText(int width) {
         return GuiUtil.trimmed(MinecraftClient.getInstance().textRenderer, Integer.toString(this.getValue()), width, false, true, isDefault() ? Formatting.RESET : Formatting.YELLOW);
     }

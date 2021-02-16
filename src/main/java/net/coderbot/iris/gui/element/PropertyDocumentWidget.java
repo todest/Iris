@@ -135,9 +135,9 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
                         child2Parent.put(a, s);
                     } else {
                         //page.add(new StringOptionProperty(ImmutableList.of("This", "Is", "Not", "Functional"), 0, widget, p, GuiUtil.trimmed(tr, "option."+p, tw, true, true), sliderOptions.contains(p), false));
-						Option<Integer> intOption = config.getIntegerOptions().get(p);
-						Option<Float> floatOption = config.getFloatOptions().get(p);
-						Option<Boolean> boolOption = config.getBooleanOptions().get(p);
+						Option<Integer> intOption = config.getIntegerOption(p);
+						Option<Float> floatOption = config.getFloatOption(p);
+						Option<Boolean> boolOption = config.getBooleanOption(p);
 						if(intOption != null) {
 							List<Integer> vals = intOption.getAllowedValues();
 							page.add(new IntOptionProperty(vals, vals.indexOf(intOption.getDefaultValue()), widget, p, GuiUtil.trimmed(tr, "option."+p, tw, true, true), sliderOptions.contains(p)));

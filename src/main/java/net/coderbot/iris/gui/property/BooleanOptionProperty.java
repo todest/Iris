@@ -26,4 +26,9 @@ public class BooleanOptionProperty extends OptionProperty<Boolean> {
         }
         this.index = defaultIndex;
     }
+
+	@Override
+	protected Boolean fallbackValue() {
+		return false;
+	}
 }

@@ -20,4 +20,9 @@ public class StringOptionProperty extends OptionProperty<String> {
     public Text createValueText(int width) {
         return GuiUtil.trimmed(MinecraftClient.getInstance().textRenderer, getValue(), width, translated, true, isDefault() ? Formatting.RESET : Formatting.YELLOW);
     }
+
+	@Override
+	protected String fallbackValue() {
+		return "";
+	}
 }
