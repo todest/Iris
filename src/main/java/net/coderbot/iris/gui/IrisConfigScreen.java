@@ -38,13 +38,13 @@ public class IrisConfigScreen extends Screen implements TransparentBackgroundScr
         float scrollAmount = 0.0f;
         String page = "main";
 
-        if(this.configProperties != null) {
+        if (this.configProperties != null) {
             scrollAmount = (float)this.configProperties.getScrollAmount() / this.configProperties.getMaxScroll();
             page = this.configProperties.getCurrentPage();
         }
 
         this.configProperties  = new PropertyDocumentWidget(client, width, height, 20, this.height - 34, 0, this.width, 26, 320);
-        if(inWorld) this.configProperties.method_31322(false);
+        if (inWorld) this.configProperties.method_31322(false);
         this.configProperties.setDocument(this.config.createDocument(this.client.textRenderer, this, this.configProperties, 320), "main");
 
         this.configProperties.setScrollAmount(this.configProperties.getMaxScroll() * scrollAmount);

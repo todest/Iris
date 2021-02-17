@@ -76,7 +76,7 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
 
     @Override
     public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
-        if(this.client.world == null) this.renderBackground(matrices);
+        if (this.client.world == null) this.renderBackground(matrices);
         else this.fillGradient(matrices, 0, 0, width, height, 0x4F232323, 0x4F232323);
         this.shaderPacks.render(matrices, mouseX, mouseY, delta);
         this.shaderProperties.render(matrices, mouseX, mouseY, delta);
@@ -88,7 +88,7 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
         drawCenteredText(matrices, this.textRenderer, new TranslatableText("pack.iris.configure.title").formatted(Formatting.GRAY, Formatting.ITALIC), (int)(this.width * 0.75), 21, 16777215);
         super.render(matrices, mouseX, mouseY, delta);
 
-        if(irisConfigButton.isMouseOver(mouseX, mouseY)) {
+        if (irisConfigButton.isMouseOver(mouseX, mouseY)) {
             this.renderTooltip(matrices, new TranslatableText("tooltip.iris.config"), mouseX, mouseY);
         }
 
@@ -106,7 +106,7 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
     private void applyChanges() {
         ShaderPackListWidget.ShaderPackEntry entry = this.shaderPacks.getSelected();
         String name = "(internal)";
-        if(entry != null) name = entry.getPackName();
+        if (entry != null) name = entry.getPackName();
         Iris.getIrisConfig().setShaderPackName(name);
         this.shaderProperties.saveProperties();
 		try {
@@ -123,18 +123,18 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
         float scrollAmount = 0.0f;
         String page = "screen";
 
-        if(this.shaderProperties != null) {
+        if (this.shaderProperties != null) {
             scrollAmount = (float)this.shaderProperties.getScrollAmount() / this.shaderProperties.getMaxScroll();
             page = this.shaderProperties.getCurrentPage();
         }
-		if(shaderProperties != null) this.shaderProperties.saveProperties();
+		if (shaderProperties != null) this.shaderProperties.saveProperties();
         this.shaderProperties = new PropertyDocumentWidget(this.client, this.width / 2, this.height, 32, this.height - 58, this.width / 2, this.width, 26);
         shaderProperties.onSave(() -> {
 			ShaderPackConfig config = Iris.getCurrentPack().getConfig();
-        	for(String p : shaderProperties.getPages()) {
+        	for (String p : shaderProperties.getPages()) {
 				PropertyList l = shaderProperties.getPage(p);
 				l.forEvery(property -> {
-					if(property instanceof OptionProperty) {
+					if (property instanceof OptionProperty) {
 						String key = ((OptionProperty<?>)property).getKey();
 						config.getConfigProperties().setProperty(key, ((OptionProperty<?>)property).getValue().toString());
 					}
@@ -149,20 +149,20 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
 		});
 		shaderProperties.onLoad(() -> {
 			ShaderPackConfig config = Iris.getCurrentPack().getConfig();
-			for(String p : shaderProperties.getPages()) {
+			for (String p : shaderProperties.getPages()) {
 				PropertyList l = shaderProperties.getPage(p);
 				l.forEvery(property -> {
-					if(property instanceof OptionProperty) {
+					if (property instanceof OptionProperty) {
 						String key = ((OptionProperty<?>)property).getKey();
-						if(property instanceof IntOptionProperty) {
+						if (property instanceof IntOptionProperty) {
 							Option<Integer> opt = config.getIntegerOption(key);
-							if(opt != null) ((IntOptionProperty)property).setValue(opt.getValue());
-						} else if(property instanceof FloatOptionProperty) {
+							if (opt != null) ((IntOptionProperty)property).setValue(opt.getValue());
+						} else if (property instanceof FloatOptionProperty) {
 							Option<Float> opt = config.getFloatOption(key);
-							if(opt != null) ((FloatOptionProperty)property).setValue(opt.getValue());
-						} else if(property instanceof BooleanOptionProperty) {
+							if (opt != null) ((FloatOptionProperty)property).setValue(opt.getValue());
+						} else if (property instanceof BooleanOptionProperty) {
 							Option<Boolean> opt = config.getBooleanOption(key);
-							if(opt != null) ((BooleanOptionProperty)property).setValue(opt.getValue());
+							if (opt != null) ((BooleanOptionProperty)property).setValue(opt.getValue());
 						}
 					}
 				});
@@ -173,7 +173,7 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
 				e.printStackTrace();
 			}
 		});
-        if(this.client.world != null) this.shaderProperties.method_31322(false);
+        if (this.client.world != null) this.shaderProperties.method_31322(false);
         this.reloadShaderConfig();
 
         this.shaderProperties.goTo(page);
@@ -189,8 +189,8 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
 
 	@Override
 	public void tick() {
-		for(Element e : this.children) {
-			if(e instanceof TickableElement) ((TickableElement)e).tick();
+		for (Element e : this.children) {
+			if (e instanceof TickableElement) ((TickableElement)e).tick();
 		}
 	}
 
@@ -238,9 +238,9 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
 
 		@Override
         public void tick() {
-            if(areaHovered) {
-                if(fadeTicks < 3) fadeTicks++;
-            } else if(fadeTicks > 0) fadeTicks--;
+            if (areaHovered) {
+                if (fadeTicks < 3) fadeTicks++;
+            } else if (fadeTicks > 0) fadeTicks--;
         }
     }
 }

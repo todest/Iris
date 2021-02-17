@@ -42,11 +42,12 @@ public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPack
         try {
             Path path = Iris.getShaderPackDir();
             int index = 0;
+			addEntry(index, "(off)");
             addEntry(index, "(internal)");
-            for(Path folder : Files.walk(path, 1).filter(p -> {
-                if(Files.isDirectory(p)) {
+            for (Path folder : Files.walk(path, 1).filter(p -> {
+                if (Files.isDirectory(p)) {
                     return Files.exists(p.resolve("shaders"));
-                } else if(p.toString().endsWith(".zip")) {
+                } else if (p.toString().endsWith(".zip")) {
                     try {
                         FileSystem zipSystem = FileSystems.newFileSystem(p, Iris.class.getClassLoader());
                         return Files.exists(zipSystem.getPath("shaders"));
@@ -55,7 +56,7 @@ public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPack
                 return false;
             }).collect(Collectors.toList())) {
                 String name = folder.getFileName().toString();
-                if(!name.equals("(internal)")) {
+                if (!name.equals("(internal)")) {
                     index++;
                     addEntry(index, name);
                 }
@@ -75,7 +76,7 @@ public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPack
 
     public void addEntry(int index, String name) {
         ShaderPackEntry entry = new ShaderPackEntry(index, this, name);
-        if(Iris.getIrisConfig().getShaderPackName().equals(name)) this.selected = entry;
+        if (Iris.getIrisConfig().getShaderPackName().equals(name)) this.selected = entry;
         this.addEntry(entry);
     }
 
@@ -103,19 +104,19 @@ public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPack
             TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
             int color = 0xFFFFFF;
             String name = packName;
-            if(textRenderer.getWidth(new LiteralText(name).formatted(Formatting.BOLD)) > this.list.width - 8) {
+            if (textRenderer.getWidth(new LiteralText(name).formatted(Formatting.BOLD)) > this.list.width - 8) {
                 char[] cs = packName.toCharArray();
                 name = String.copyValueOf(Arrays.copyOfRange(cs, 0, Math.min(cs.length, (int)(((float)this.list.width - 14) / 6)) - 3))+"...";
             }
             MutableText text = new LiteralText(name);
-            if(this.isMouseOver(mouseX, mouseY)) text = text.formatted(Formatting.BOLD);
-            if(this.isSelected()) color = 0xFFF263;
+            if (this.isMouseOver(mouseX, mouseY)) text = text.formatted(Formatting.BOLD);
+            if (this.isSelected()) color = 0xFFF263;
             drawCenteredText(matrices, textRenderer, text, (x + entryWidth / 2) - 2, y + (entryHeight - 11) / 2, color);
         }
 
         @Override
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            if(!this.isSelected() && button == 0) {
+            if (!this.isSelected() && button == 0) {
                 this.list.select(this.index);
                 return true;
             }
