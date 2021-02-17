@@ -48,9 +48,8 @@ public class ShaderPack {
 	private final ShaderPackConfig config;
 	private final ShaderProperties shaderProperties;
 	private final Map<String, Map<String, String>> langMap;
-	public static final ShaderPack NO_OP;
 
-	public ShaderPack(Path root) throws IOException {
+	public ShaderPack(@Nullable Path root) throws IOException {
 		this.shaderProperties = loadProperties(root, "shaders.properties")
 			.map(ShaderProperties::new)
 			.orElseGet(ShaderProperties::empty);
@@ -96,6 +95,8 @@ public class ShaderPack {
 	// TODO: Copy-paste from IdMap, find a way to deduplicate this
 	private static Optional<Properties> loadProperties(Path shaderPath, String name) {
 		Properties properties = new Properties();
+
+		if (shaderPath == null) return Optional.empty();
 
 		try {
 			properties.load(Files.newInputStream(shaderPath.resolve(name)));
@@ -204,7 +205,7 @@ public class ShaderPack {
 		String vertexSource = null;
 		String fragmentSource = null;
 
-		if(root == null) {
+		if (root == null) {
 			return new ProgramSource(program, null, null, pack);
 		}
 
@@ -244,7 +245,7 @@ public class ShaderPack {
 	}
 
 	private Map<String, Map<String, String>> parseLangEntries(Path root) throws IOException {
-		if(root == null) return new HashMap<>();
+		if (root == null) return new HashMap<>();
 
 		Path langFolderPath = root.resolve("lang");
 		Map<String, Map<String, String>> allLanguagesMap = new HashMap<>();
@@ -252,16 +253,16 @@ public class ShaderPack {
 		if (!Files.exists(langFolderPath)) {
 			return allLanguagesMap;
 		}
-		//We are using a max depth of one to ensure we only get the surface level *files* without going deeper
+		// We are using a max depth of one to ensure we only get the surface level *files* without going deeper
 		// we also want to avoid any directories while filtering
-		//Basically, we want the immediate files nested in the path for the langFolder
-		//There is also Files.list which can be used for similar behavior
+		// Basically, we want the immediate files nested in the path for the langFolder
+		// There is also Files.list which can be used for similar behavior
 		Files.walk(langFolderPath, 1).filter(path -> !Files.isDirectory(path)).forEach(path -> {
 
 			Map<String, String> currentLanguageMap = new HashMap<>();
-			//some shaderpacks use optifines file name coding which is different than minecraft's.
-			//An example of this is using "en_US.lang" compared to "en_us.json"
-			//also note that optifine uses a property scheme for loading language entries to keep parity with other optifine features
+			// some shaderpacks use Optifine's file name coding which is different than Minecraft's.
+			// An example of this is using "en_US.lang" compared to "en_us.json"
+			// also note that Optifine uses a property scheme for loading language entries to keep parity with other Optifine features
 			String currentFileName = path.getFileName().toString().toLowerCase();
 			String currentLangCode = currentFileName.substring(0, currentFileName.lastIndexOf("."));
 			Properties properties = new Properties();
@@ -326,16 +327,5 @@ public class ShaderPack {
 				return Optional.empty();
 			}
 		}
-	}
-
-	static {
-		ShaderPack s;
-		try {
-			s = new ShaderPack(null);
-		} catch (IOException e) {
-			e.printStackTrace();
-			s = null;
-		}
-		NO_OP = s;
 	}
 }

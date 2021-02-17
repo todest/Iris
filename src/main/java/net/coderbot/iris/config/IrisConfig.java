@@ -3,7 +3,6 @@ package net.coderbot.iris.config;
 import com.google.common.collect.ImmutableList;
 import net.coderbot.iris.Iris;
 import net.coderbot.iris.gui.GuiUtil;
-import net.coderbot.iris.gui.ScreenStack;
 import net.coderbot.iris.gui.ShaderPackScreen;
 import net.coderbot.iris.gui.UiTheme;
 import net.coderbot.iris.gui.element.PropertyDocumentWidget;
@@ -14,6 +13,7 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,14 +23,14 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * A class dedicated to storing the config values of shaderpacks. Right now it only stores the path to the current shaderpack
+ * A class dedicated to storing the config values of shaderpacks.
  */
 public class IrisConfig {
 	private static final String COMMENT =
 		"This file stores configuration options for Iris, such as the currently active shaderpack";
 
 	/**
-	 * The path to the current shaderpack. Null if the internal shaderpack is being used.
+	 * The name of the current shaderpack. It should be (off) if no shaderpack is being used, or (internal) if the internal shaderpack is being used.
 	 */
 	private String shaderPackName;
 
@@ -59,6 +59,9 @@ public class IrisConfig {
 	public void initialize() throws IOException {
 		load();
 		if (!Files.exists(propertiesPath)) {
+			if (shaderPackName == null) {
+				shaderPackName = "(off)"; // Save shaderpack as (off) on the first game launch with Iris
+			}
 			save();
 		}
 	}
@@ -69,7 +72,7 @@ public class IrisConfig {
 	 * @return if shaders should be off (using no-op shaders)
 	 */
 	public boolean isNoOp() {
-		return shaderPackName == null || shaderPackName.equals("(off)");
+		return shaderPackName != null && shaderPackName.equals("(off)");
 	}
 
 	/**
@@ -84,24 +87,19 @@ public class IrisConfig {
 	/**
 	 * Returns the name of the current shaderpack
 	 *
-	 * @return shaderpack name. If internal it returns "(internal)", and if shaders are off it returns "(off)".
+	 * @return Returns the current shaderpack name - if internal shaders are being used it returns "(internal)", and if shaders are off it returns "(off)".
 	 */
 	public String getShaderPackName() {
-		if (shaderPackName == null) {
-			return "(off)";
-		}
-
 		return shaderPackName;
 	}
 
 	/**
 	 * Sets the shader pack name, and tries to save the config file.
-	 * Will print an error if unable to save.
+	 * Will print an error if the config file cannot be saved for whatever reason.
 	 *
 	 * @param name The name of the shader pack
 	 */
-	public void setShaderPackName(String name) {
-		if (name == null) return;
+	public void setShaderPackName(@NotNull String name) {
 		shaderPackName = name;
 		try {
 			save();
@@ -112,12 +110,12 @@ public class IrisConfig {
 	}
 
 	/**
-	 * returns the selected UI Theme
+	 * Returns the selected UI Theme
 	 *
-	 * @return the selected UI Theme, or the default theme if null
+	 * @return The selected UI Theme, or the default theme if null
 	 */
 	public UiTheme getUITheme() {
-		if(uiTheme == null) this.uiTheme = "IRIS";
+		if (uiTheme == null) this.uiTheme = "IRIS";
 		UiTheme theme;
 		try {
 			theme = UiTheme.valueOf(uiTheme);
@@ -132,7 +130,7 @@ public class IrisConfig {
 	/**
 	 * Gets whether to use condensed view for shader pack configuration.
 	 *
-	 * @return Whether to use condensed view
+	 * @return Whether to use condensed view or not
 	 */
 	public boolean getIfCondensedShaderConfig() {
 		return condenseShaderConfig;
@@ -141,7 +139,7 @@ public class IrisConfig {
 	/**
 	 * Sets whether to use condensed view for shader pack configuration.
 	 *
-	 * @param condense Whether to use condensed view
+	 * @param condense Whether to use condensed view or not
 	 */
 	public void setIfCondensedShaderConfig(boolean condense) {
 		this.condenseShaderConfig = condense;
@@ -163,15 +161,15 @@ public class IrisConfig {
 		uiTheme = properties.getProperty("uiTheme", this.uiTheme);
 		condenseShaderConfig = Boolean.parseBoolean(properties.getProperty("condenseShaderConfig"));
 
-		if (shaderPackName != null && (shaderPackName.equals("(off)") || shaderPackName.equals("(internal)"))) {
-			shaderPackName = null;
+		if (shaderPackName == null) {
+			shaderPackName = "(off)";
 		}
 	}
 
 	/**
 	 * Puts config values to a Properties object.
 	 *
-	 * @return the Properties object written to
+	 * @return The Properties object that was written to
 	 */
 	public Properties write() {
 		Properties properties = new Properties();
@@ -184,9 +182,9 @@ public class IrisConfig {
 	}
 
 	/**
-	 * loads the config file and then populates the string, int, and boolean entries with the parsed entries
+	 * Loads the config file and then populates the string, int, and boolean entries with the parsed entries.
 	 *
-	 * @throws IOException if the file cannot be loaded
+	 * @throws IOException if the file could not be loaded
 	 */
 	public void load() throws IOException {
 		if (!Files.exists(propertiesPath)) {
@@ -221,7 +219,7 @@ public class IrisConfig {
 				0x82ffffff, 0x82ff0000, 0x82ff8800, 0x82ffd800, 0x8288ff00, 0x8200d8ff, 0x823048ff, 0x829900ff, 0x82ffffff
 		));
 		page.add(new FunctionalButtonProperty(widget, () -> MinecraftClient.getInstance().openScreen(new ShaderPackScreen(parent)), new TranslatableText("options.iris.shaderPackSelection.title"), LinkProperty.Align.CENTER_LEFT));
-		int optionTextWidthFull = (int)(width * 0.6) - 21;
+		int optionTextWidthFull = (int)(width * 0.6) - 21; // Unused?
 		int optionTextWidthHalf = (int)((width * 0.5) * 0.6) - 21;
 		page.addAllPairs(ImmutableList.of(
 				new StringOptionProperty(ImmutableList.of(UiTheme.IRIS.name(), UiTheme.VANILLA.name(), UiTheme.AQUA.name()), 0, widget, "uiTheme", GuiUtil.trimmed(tr, "property.iris.uiTheme", optionTextWidthHalf, true, true), false, false),
@@ -231,7 +229,7 @@ public class IrisConfig {
 		widget.onSave(() -> {
 			Properties ps = new Properties();
 			widget.getPage(widget.getCurrentPage()).forEvery(property -> {
-				if(property instanceof ValueProperty) {
+				if (property instanceof ValueProperty) {
 					ValueProperty<?> vp = ((ValueProperty<?>)property);
 					ps.setProperty(vp.getKey(), vp.getValue().toString());
 				}
@@ -252,9 +250,9 @@ public class IrisConfig {
 				e.printStackTrace();
 			}
 			Properties properties = this.write();
-			for(String k : widget.getPages()) {
-				widget.getPage(k).forEvery(property -> {
-					if(property instanceof ValueProperty) {
+			for (String pageName : widget.getPages()) {
+				widget.getPage(pageName).forEvery(property -> {
+					if (property instanceof ValueProperty) {
 						ValueProperty<?> vp = ((ValueProperty<?>)property);
 						vp.setValue(properties.getProperty(vp.getKey()));
 						vp.resetValueText();
