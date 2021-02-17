@@ -33,40 +33,40 @@ public class ShaderPackConfig {
 	}
 
 	//this 3 methods below should be used by the gui to get the available options and then use them
-	public Iterable<String> getBooleanOptions() {
-		return booleanOptions.keySet();
+	public Iterable<Option<Boolean>> getBooleanOptions() {
+		return booleanOptions.values();
 	}
 
-	public Iterable<String> getFloatOptions() {
-		return floatOptions.keySet();
+	public Iterable<Option<Float>> getFloatOptions() {
+		return floatOptions.values();
 	}
 
-	public Iterable<String> getIntegerOptions() {
-		return integerOptions.keySet();
+	public Iterable<Option<Integer>> getIntegerOptions() {
+		return integerOptions.values();
 	}
 
 	public Option<Boolean> getBooleanOption(String key) {
 		return booleanOptions.get(key);
 	}
 
-	public Option<Float> getFloatOption(String key) {
-		return floatOptions.get(key);
-	}
-
 	public Option<Integer> getIntegerOption(String key) {
 		return integerOptions.get(key);
 	}
 
-	void addBooleanOption(String key, Option<Boolean> option) {
-		booleanOptions.put(key, option);
+	public Option<Float> getFloatOption(String key) {
+		return floatOptions.get(key);
 	}
 
-	void addIntegerOption(String key, Option<Integer> option) {
-		integerOptions.put(key, option);
+	void addBooleanOption(Option<Boolean> option) {
+		booleanOptions.put(option.getName(), option);
 	}
 
-	void addFloatOption(String key, Option<Float> option) {
-		floatOptions.put(key, option);
+	void addIntegerOption(Option<Integer> option) {
+		integerOptions.put(option.getName(), option);
+	}
+
+	void addFloatOption(Option<Float> option) {
+		floatOptions.put(option.getName(), option);
 	}
 
 	/**
