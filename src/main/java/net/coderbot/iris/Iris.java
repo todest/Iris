@@ -15,6 +15,7 @@ import net.coderbot.iris.pipeline.ShaderPipeline;
 import net.coderbot.iris.postprocess.CompositeRenderer;
 import net.coderbot.iris.rendertarget.RenderTargets;
 import net.coderbot.iris.shaderpack.ShaderPack;
+import net.minecraft.util.Tickable;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,7 +39,7 @@ public class Iris implements ClientModInitializer {
 	public static final String MODID = "iris";
 	public static final Logger logger = LogManager.getLogger(MODID);
 
-	private static final Path shaderpacksDirectory = FabricLoader.getInstance().getGameDir().resolve("shaderpacks");
+	public static final Path SHADERPACK_DIR = FabricLoader.getInstance().getGameDir().resolve("shaderpacks");
 
 	private static ShaderPack currentPack;
 	private static ShaderPipeline pipeline;
@@ -46,6 +47,7 @@ public class Iris implements ClientModInitializer {
 	private static CompositeRenderer compositeRenderer;
 	private static IrisConfig irisConfig;
 	private static FileSystem zipFileSystem;
+
 	public static KeyBinding reloadKeybind;
 
 	@Override
@@ -63,7 +65,7 @@ public class Iris implements ClientModInitializer {
 		);
 
 		try {
-			Files.createDirectories(shaderpacksDirectory);
+			Files.createDirectories(SHADERPACK_DIR);
 		} catch (IOException e) {
 			Iris.logger.warn("Failed to create shaderpacks directory!");
 			Iris.logger.catching(Level.WARN, e);
@@ -78,8 +80,8 @@ public class Iris implements ClientModInitializer {
 			logger.catching(Level.ERROR, e);
 		}
 
-
 		loadShaderpack();
+
 		reloadKeybind = KeyBindingHelper.registerKeyBinding(new KeyBinding("iris.keybind.reload", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_R, "iris.keybinds"));
 
 		ClientTickEvents.END_CLIENT_TICK.register(minecraftClient -> {
@@ -103,6 +105,10 @@ public class Iris implements ClientModInitializer {
 		});
 	}
 
+	public static Path getShaderPackDir() {
+		return SHADERPACK_DIR;
+	}
+
 	public static void loadShaderpack() {
 		// Attempt to load an external shaderpack if it is available
 		if (!irisConfig.isInternal()) {
@@ -115,7 +121,7 @@ public class Iris implements ClientModInitializer {
 	}
 
 	private static boolean loadExternalShaderpack(String name) {
-		Path shaderPackRoot = shaderpacksDirectory.resolve(name);
+		Path shaderPackRoot = SHADERPACK_DIR.resolve(name);
 		Path shaderPackPath = shaderPackRoot.resolve("shaders");
 
 		if (shaderPackRoot.toString().endsWith(".zip")) {
@@ -184,6 +190,8 @@ public class Iris implements ClientModInitializer {
 			logger.error("Failed to load internal shaderpack!");
 			throw new RuntimeException("Failed to load internal shaderpack!", e);
 		}
+
+		getIrisConfig().setShaderPackName("(internal)");
 
 		logger.info("Using internal shaders");
 	}
