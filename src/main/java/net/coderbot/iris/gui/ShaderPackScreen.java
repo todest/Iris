@@ -49,7 +49,7 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
         boolean inWorld = this.client.world != null;
 
         this.shaderPacks = new ShaderPackListWidget(this.client, this.width / 2, this.height, 32, this.height - 58, 0, width / 2);
-        if(inWorld) this.shaderPacks.method_31322(false);
+        if (inWorld) this.shaderPacks.method_31322(false);
         this.children.add(shaderPacks);
 
         this.refreshShaderPropertiesWidget();
@@ -131,9 +131,9 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
         this.shaderProperties = new PropertyDocumentWidget(this.client, this.width / 2, this.height, 32, this.height - 58, this.width / 2, this.width, 26);
         shaderProperties.onSave(() -> {
 			ShaderPackConfig config = Iris.getCurrentPack().getConfig();
-        	for (String p : shaderProperties.getPages()) {
-				PropertyList l = shaderProperties.getPage(p);
-				l.forEvery(property -> {
+        	for (String pageName : shaderProperties.getPages()) {
+				PropertyList propertyList = shaderProperties.getPage(pageName);
+				propertyList.forEvery(property -> {
 					if (property instanceof OptionProperty) {
 						String key = ((OptionProperty<?>)property).getKey();
 						config.getConfigProperties().setProperty(key, ((OptionProperty<?>)property).getValue().toString());
@@ -149,9 +149,9 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
 		});
 		shaderProperties.onLoad(() -> {
 			ShaderPackConfig config = Iris.getCurrentPack().getConfig();
-			for (String p : shaderProperties.getPages()) {
-				PropertyList l = shaderProperties.getPage(p);
-				l.forEvery(property -> {
+			for (String pageName : shaderProperties.getPages()) {
+				PropertyList propertyList = shaderProperties.getPage(pageName);
+				propertyList.forEvery(property -> {
 					if (property instanceof OptionProperty) {
 						String key = ((OptionProperty<?>)property).getKey();
 						if (property instanceof IntOptionProperty) {

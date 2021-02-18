@@ -43,6 +43,7 @@ public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPack
             Path path = Iris.getShaderPackDir();
             int index = 0;
 			addEntry(index, "(off)");
+			index++;
             addEntry(index, "(internal)");
             for (Path folder : Files.walk(path, 1).filter(p -> {
                 if (Files.isDirectory(p)) {
