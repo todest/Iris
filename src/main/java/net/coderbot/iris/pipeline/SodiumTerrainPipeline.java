@@ -99,7 +99,7 @@ public class SodiumTerrainPipeline {
 	}
 
 	public static SodiumTerrainPipeline create() {
-		return new SodiumTerrainPipeline(Objects.requireNonNull(Iris.getCurrentPack()), Iris.getRenderTargets());
+		return new SodiumTerrainPipeline(Iris.getCurrentPack(), Iris.getRenderTargets());
 	}
 
 	public Optional<String> getTerrainVertexShaderSource() {

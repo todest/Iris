@@ -22,7 +22,7 @@ public class ShaderPackConfig {
 	private final Map<String, Option<Integer>> integerOptions = new HashMap<>();
 
 	public ShaderPackConfig(String name) {
-		//optifine uses txt files, so we should do the same
+		// Optifine uses txt files, so we should do the same
 		shaderPackConfigPath = SHADERPACK_DIR.resolve(name + ".txt");
 		configProperties = new Properties();
 		comment = "This file stores the shaderpack configuration for the shaderpack " + name;
@@ -32,7 +32,7 @@ public class ShaderPackConfig {
 		return configProperties;
 	}
 
-	//this 3 methods below should be used by the gui to get the available options and then use them
+	// These 3 methods below should be used by the gui to get the available options and then use them
 	public Iterable<Option<Boolean>> getBooleanOptions() {
 		return booleanOptions.values();
 	}
