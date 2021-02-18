@@ -57,7 +57,7 @@ public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPack
                 return false;
             }).collect(Collectors.toList())) {
                 String name = folder.getFileName().toString();
-                if (!name.equals("(internal)")) {
+                if (!name.equals("off") && !name.equals("(internal)")) {
                     index++;
                     addEntry(index, name);
                 }
