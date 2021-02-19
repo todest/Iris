@@ -34,12 +34,12 @@ public class IdMap {
 	private final Object2IntMap<Identifier> entityIdMap;
 
 	/**
-	 * a map that contains the identifier of an item to the integer value parsed in block.properties
+	 * A map that contains the identifier of an item to the integer value parsed in block.properties
 	 */
 	private Map<Identifier, Integer> blockPropertiesMap = Maps.newHashMap();
 
 	/**
-	 * a map that contains render layers for blocks in block.properties
+	 * A map that contains render layers for blocks in block.properties
 	 */
 	private Map<Identifier, RenderLayer> blockRenderLayerMap = Maps.newHashMap();
 
@@ -59,6 +59,13 @@ public class IdMap {
 		// TODO: Properly override block render layers
 	}
 
+	/**
+	 * Loads properties from a properties file in a shaderpack path
+	 * TODO: Preprocess conditional preprocessor directives (#ifdef, #if, etc.) and Standard Macros A to G from Optifine
+	 * See https://github.com/sp614x/optifine/blob/master/OptiFineDoc/doc/shaders.txt#L670
+	 * Permalink: https://github.com/sp614x/optifine/blob/28172bc21b306334e06916d3e3907f251c51e0dc/OptiFineDoc/doc/shaders.txt#L670
+	 * This Java macro preprocessor might help: http://jsesoft.sourceforge.net/
+	 */
 	private static Optional<Properties> loadProperties(Path shaderPath, String name) {
 		Properties properties = new Properties();
 
