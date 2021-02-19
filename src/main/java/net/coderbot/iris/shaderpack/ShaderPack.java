@@ -5,10 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 
 import net.coderbot.iris.Iris;
 import net.coderbot.iris.gl.texture.InternalTextureFormat;
@@ -17,9 +14,11 @@ import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
+import net.minecraft.util.Util;
 import net.minecraft.util.registry.BuiltinRegistries;
 import net.minecraft.util.registry.DynamicRegistryManager;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.Level;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +48,15 @@ public class ShaderPack {
 	private final ShaderProperties shaderProperties;
 	private final Map<String, Map<String, String>> langMap;
 
+	private static final Map<RegistryKey<World>, Integer> RAW_ID_DIMS = Util.make(() -> {
+		Map<RegistryKey<World>, Integer> worldToIdMap  = new HashMap<>();
+		worldToIdMap.put(World.NETHER, -1);
+		worldToIdMap.put(World.OVERWORLD, 0);
+		worldToIdMap.put(World.END, 1);
+		return worldToIdMap;
+	});
+
+
 	public ShaderPack(@Nullable Path root) throws IOException {
 		this.shaderProperties = loadProperties(root, "shaders.properties")
 			.map(ShaderProperties::new)
@@ -59,32 +67,57 @@ public class ShaderPack {
 
 		this.packDirectives = new PackDirectives();
 
-		this.gbuffersBasic = readProgramSource(root, "gbuffers_basic", this);
-		this.gbuffersBeaconBeam = readProgramSource(root, "gbuffers_beaconbeam", this);
-		this.gbuffersTextured = readProgramSource(root, "gbuffers_textured", this);
-		this.gbuffersTexturedLit = readProgramSource(root, "gbuffers_textured_lit", this);
-		this.gbuffersTerrain = readProgramSource(root, "gbuffers_terrain", this);
-		this.gbuffersDamagedBlock = readProgramSource(root, "gbuffers_damagedblock", this);
-		this.gbuffersWater = readProgramSource(root, "gbuffers_water", this);
-		this.gbuffersSkyBasic = readProgramSource(root, "gbuffers_skybasic", this);
-		this.gbuffersSkyTextured = readProgramSource(root, "gbuffers_skytextured", this);
-		this.gbuffersClouds = readProgramSource(root, "gbuffers_clouds", this);
-		this.gbuffersWeather = readProgramSource(root, "gbuffers_weather", this);
-		this.gbuffersEntities = readProgramSource(root, "gbuffers_entities", this);
-		this.gbuffersEntitiesGlowing = readProgramSource(root, "gbuffers_entities_glowing", this);
-		this.gbuffersGlint = readProgramSource(root, "gbuffers_armor_glint", this);
-		this.gbuffersEntityEyes = readProgramSource(root, "gbuffers_spidereyes", this);
-		this.gbuffersBlock = readProgramSource(root, "gbuffers_block", this);
+		Path dimensionShaders = root;
+
+		if (root != null) {
+			List<Integer> vanillaDimensions = new ArrayList<>();
+
+			Files.walk(root).forEach(path -> {
+				if (Files.isDirectory(path)) {
+					String name = path.getFileName().toString();
+					if (name.startsWith("world")) {
+						String world = String.valueOf(Arrays.copyOfRange(name.toCharArray(), 5, name.length()));
+						try {
+							vanillaDimensions.add(Integer.parseInt(world));
+						} catch (NumberFormatException ignored) {}
+					}
+				}
+			});
+			RegistryKey<World> dimension;
+			if (MinecraftClient.getInstance().world != null) {
+				dimension = MinecraftClient.getInstance().world.getRegistryKey();
+				if (RAW_ID_DIMS.containsKey(dimension) && vanillaDimensions.contains(RAW_ID_DIMS.get(dimension))) {
+					dimensionShaders = root.resolve("world" + RAW_ID_DIMS.get(dimension));
+				}
+			}
+		}
+
+		this.gbuffersBasic = readProgramSource(root, dimensionShaders,"gbuffers_basic", this);
+		this.gbuffersBeaconBeam = readProgramSource(root, dimensionShaders,"gbuffers_beaconbeam", this);
+		this.gbuffersTextured = readProgramSource(root, dimensionShaders,"gbuffers_textured", this);
+		this.gbuffersTexturedLit = readProgramSource(root, dimensionShaders,"gbuffers_textured_lit", this);
+		this.gbuffersTerrain = readProgramSource(root, dimensionShaders,"gbuffers_terrain", this);
+		this.gbuffersDamagedBlock = readProgramSource(root, dimensionShaders,"gbuffers_damagedblock", this);
+		this.gbuffersWater = readProgramSource(root, dimensionShaders,"gbuffers_water", this);
+		this.gbuffersSkyBasic = readProgramSource(root, dimensionShaders,"gbuffers_skybasic", this);
+		this.gbuffersSkyTextured = readProgramSource(root, dimensionShaders,"gbuffers_skytextured", this);
+		this.gbuffersClouds = readProgramSource(root, dimensionShaders,"gbuffers_clouds", this);
+		this.gbuffersWeather = readProgramSource(root, dimensionShaders,"gbuffers_weather", this);
+		this.gbuffersEntities = readProgramSource(root, dimensionShaders, "gbuffers_entities", this);
+		this.gbuffersEntitiesGlowing = readProgramSource(root, dimensionShaders,"gbuffers_entities_glowing", this);
+		this.gbuffersGlint = readProgramSource(root, dimensionShaders,"gbuffers_armor_glint", this);
+		this.gbuffersEntityEyes = readProgramSource(root, dimensionShaders,"gbuffers_spidereyes", this);
+		this.gbuffersBlock = readProgramSource(root, dimensionShaders,"gbuffers_block", this);
 
 		this.composite = new ProgramSource[16];
 
 		for (int i = 0; i < this.composite.length; i++) {
 			String suffix = i == 0 ? "" : Integer.toString(i);
 
-			this.composite[i] = readProgramSource(root, "composite" + suffix, this);
+			this.composite[i] = readProgramSource(root, dimensionShaders, "composite" + suffix, this);
 		}
 
-		this.compositeFinal = readProgramSource(root, "final", this);
+		this.compositeFinal = readProgramSource(root, dimensionShaders, "final", this);
 
 		this.idMap = new IdMap(root);
 		this.langMap = parseLangEntries(root);
@@ -201,7 +234,7 @@ public class ShaderPack {
 		return shaderProperties;
 	}
 
-	private static ProgramSource readProgramSource(Path root, String program, ShaderPack pack) throws IOException {
+	private static ProgramSource readProgramSource(Path root, Path dimensionShaders, String program, ShaderPack pack) throws IOException {
 		String vertexSource = null;
 		String fragmentSource = null;
 
@@ -210,7 +243,7 @@ public class ShaderPack {
 		}
 
 		try {
-			Path vertexPath = root.resolve(program + ".vsh");
+			Path vertexPath = dimensionShaders.resolve(program + ".vsh");
 			vertexSource = readFile(vertexPath);
 
 			if (vertexSource != null) {
@@ -222,7 +255,7 @@ public class ShaderPack {
 		}
 
 		try {
-			Path fragmentPath = root.resolve(program + ".fsh");
+			Path fragmentPath = dimensionShaders.resolve(program + ".fsh");
 			fragmentSource = readFile(fragmentPath);
 
 			if (fragmentSource != null) {
