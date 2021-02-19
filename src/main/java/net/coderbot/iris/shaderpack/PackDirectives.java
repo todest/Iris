@@ -9,8 +9,8 @@ public class PackDirectives {
 	// Some of these values also come from individual shader files, such as the requested buffer formats.
 
 	public IntList getBuffersToBeCleared() {
-		// TODO: Hardcoding for sildurs: should clear all buffers unless otherwise specified, but we skip buffer 7
-		return new IntArrayList(new int[]{0, 1, 2, 3, 4, 5, 6});
+		// TODO: Hardcoding for sildurs: should clear all buffers unless otherwise specified
+		return new IntArrayList(new int[]{0, 1, 2, 3, 4, 5, 6, 7});
 	}
 
 	public InternalTextureFormat[] getRequestedBufferFormats() {
