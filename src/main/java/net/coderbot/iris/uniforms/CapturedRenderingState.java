@@ -21,7 +21,7 @@ public class CapturedRenderingState {
 	}
 
 	public void setGbufferModelView(Matrix4f gbufferModelView) {
-		this.gbufferModelView = gbufferModelView.copy();
+		this.gbufferModelView = gbufferModelView;
 	}
 
 	public Matrix4f getGbufferProjection() {
@@ -29,7 +29,7 @@ public class CapturedRenderingState {
 	}
 
 	public void setGbufferProjection(Matrix4f gbufferProjection) {
-		this.gbufferProjection = gbufferProjection.copy();
+		this.gbufferProjection = gbufferProjection;
 	}
 
 	public void setTickDelta(float tickDelta) {
