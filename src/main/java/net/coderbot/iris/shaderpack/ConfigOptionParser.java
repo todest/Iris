@@ -9,14 +9,14 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
+import net.coderbot.iris.Iris;
 import net.minecraft.util.Util;
 
 public class ConfigOptionParser {
 	/*
 	 Regex for matching boolean options
-	  Match if or if not the line starts with anynumber of backslashes that are more than 2 ("//")
-	  Match 0 or more whitspace after the "//"
+	  Match if or if not the line starts with any number of backslashes that are more than 2 ("//")
+	  Match 0 or more whitespace after the "//"
 	  Match the #define
 	  Match 1 whitespace after that
 	  Match any letter, number, or underscore name
@@ -98,7 +98,7 @@ public class ConfigOptionParser {
 				String startingComment = group(booleanMatcher, "startingComment");
 				String trailingComment = group(booleanMatcher,"commentContent");
 
-				if (name == null) continue; //continue if the name is not apparent. Not sure how this is possible if the regex matches, but to be safe, let's ignore it
+				if (name == null) continue; // Continue if the name is not apparent. Not sure how this is possible if the regex matches, but to be safe, let's ignore it
 
 
 
@@ -107,19 +107,19 @@ public class ConfigOptionParser {
 				}
 
 
-				Option<Boolean> option = createBooleanOption(name, trailingComment, startingComment, config); //create a boolean option and sync it with the config
+				Option<Boolean> option = createBooleanOption(name, trailingComment, startingComment, config); // Create a boolean option and sync it with the config
 
 				lines.set(i, applyBooleanOption(option, trimmedLine, startingComment));
-				System.out.println(option);
+				Iris.logger.debug("Parsed shader config option: " + option);
 
-			} else if (numberMatcher.matches()) { //matches floats and int options
-				Matcher integerMatcher = INTEGER_OPTION_PATTERN.matcher(trimmedLine); //check if it is explicitly integer
-				if (!integerMatcher.matches()) { //if it is a float
+			} else if (numberMatcher.matches()) { // Matches floats and int options
+				Matcher integerMatcher = INTEGER_OPTION_PATTERN.matcher(trimmedLine); // Check if it is explicitly integer
+				if (!integerMatcher.matches()) { // If it is a float
 					String name = group(numberMatcher, "name");
 					String value = group(numberMatcher, "value");
 					String comment = group(numberMatcher, "commentContent");
 
-					if (name == null || value == null) continue; //if null, continue
+					if (name == null || value == null) continue; // If null, continue
 
 					if (name.startsWith("MC_") || IGNORED_PROGRAM_NAMES.contains(name)) continue;
 
@@ -128,10 +128,10 @@ public class ConfigOptionParser {
 					if (floatOption != null) {
 						String line = trimmedLine.replace(value, floatOption.getValue().toString());
 						lines.set(i, line);
-						System.out.println(floatOption);
+						Iris.logger.debug("Parsed shader config option (float): " + floatOption);
 					}
 
-				} else { //if it  is a int option
+				} else { // If it is a int option
 					String name = group(integerMatcher, "name");
 					String value = group(integerMatcher, "value");
 					String comment = group(integerMatcher, "commentContent");
@@ -145,7 +145,7 @@ public class ConfigOptionParser {
 					if (integerOption != null) {
 						String line = trimmedLine.replace(value, integerOption.getValue().toString());
 						lines.set(i, line);
-						System.out.println(integerOption);
+						Iris.logger.debug("Parsed shader config option (Integer): " + integerOption);
 					}
 				}
 			}
@@ -176,8 +176,8 @@ public class ConfigOptionParser {
 		if (option.getValue() && startingComment != null) {
 			return line.replace(startingComment, "");
 
-			//if the option is false but there is no comment at the beginning
-			//this indicates that the option in the config is false, but the line is true
+			// If the option is false but there is no comment at the beginning
+			// This indicates that the option in the config is false, but the line is true
 		} else if (!option.getValue() && startingComment == null) {
 			return  "//" + line;
 		}
@@ -194,7 +194,7 @@ public class ConfigOptionParser {
 	 * @return a new option
 	 */
 	private static Option<Boolean> createBooleanOption(String name, String comment, String startingComment, ShaderPackConfig config) {
-		boolean defaultValue = startingComment == null;//if the starting comment is not present, then it is default on, otherwise it is off
+		boolean defaultValue = startingComment == null;// If the starting comment is not present, then it is default on, otherwise it is off
 
 		Option<Boolean> booleanOption = new Option<>(comment, Arrays.asList(true, false), name, defaultValue, Boolean::parseBoolean);
 
@@ -296,7 +296,7 @@ public class ConfigOptionParser {
 		if (array == null) {
 			return list;
 		}
-		//replace the "[" and "]" of the array
+		// Replace the "[" and "]" of the array
 		array = array.replace("[", "").replace("]", "");
 
 		for (String val : array.split("\\s+")) {
@@ -305,5 +305,4 @@ public class ConfigOptionParser {
 
 		return list;
 	}
-
 }

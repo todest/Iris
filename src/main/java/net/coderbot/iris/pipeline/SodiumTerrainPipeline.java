@@ -92,8 +92,8 @@ public class SodiumTerrainPipeline {
 
 		new BuiltinUniformReplacementTransformer("a_LightCoord").apply(transformations);
 
-		System.out.println("Final patched source:");
-		System.out.println(transformations);
+		Iris.logger.debug("Final patched source:");
+		Iris.logger.debug(transformations);
 
 		return transformations.toString();
 	}

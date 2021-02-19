@@ -13,6 +13,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.coderbot.iris.Iris;
+import net.minecraft.util.registry.Registry;
 import org.apache.logging.log4j.Level;
 
 import net.minecraft.client.render.RenderLayer;
@@ -67,7 +68,20 @@ public class IdMap {
 	 * This Java macro preprocessor might help: http://jsesoft.sourceforge.net/
 	 */
 	private static Optional<Properties> loadProperties(Path shaderPath, String name) {
-		Properties properties = new Properties();
+		// TODO: Tempfix so pre-1.13 block id mappings in the currently unrecognized #else condition in
+		//  Sildur's Shaders block.properties are ignored, so they don't override the valid post-1.13
+		//  block id mappings in the #if MC_VERSION >= 11300 condition. Remove when conditionals
+		//  and standard macro preprocessing is implemented.
+
+		// Ignore duplicate properties after the original property is defined
+		Properties properties = new Properties() {
+			@Override
+			public synchronized Object put(Object key, Object value) {
+				if (get(key) != null) return get(key); // If the key already has a value, don't change it
+
+				return super.put(key, value);
+			}
+		};
 
 		if (shaderPath == null) return Optional.empty();
 
@@ -119,6 +133,15 @@ public class IdMap {
 				try {
 					Identifier identifier = new Identifier(part);
 
+					// TODO: Tempfix so pre-1.13 block id mappings in the currently unrecognized #else condition in
+					//  Sildur's Shaders block.properties are ignored, so they don't override the valid post-1.13
+					//  block id mappings in the #if MC_VERSION >= 11300 condition. Remove when conditionals
+					//  and standard macro preprocessing is implemented.
+
+					// Skip iteration if the block identifier doesn't exist in the registry (so non-existing pre-1.13
+					// block id mappings in Sildur's won't be parsed)
+					if (keyPrefix.equals("block.") && !Registry.BLOCK.getOrEmpty(identifier).isPresent()) continue;
+
 					idMap.put(identifier, intId);
 				} catch (InvalidIdentifierException e) {
 					Iris.logger.warn("Failed to parse an identifier in " + fileName + " for the key " + key + ":");
@@ -131,7 +154,7 @@ public class IdMap {
 	}
 
 	/**
-	 * parses entries from item.properties and entities.properties
+	 * Parses a render layer map
 	 */
 	private static Map<Identifier, RenderLayer> parseRenderLayerMap(Properties properties, String keyPrefix, String fileName) {
 		// TODO: Most of this is copied from parseIdMap, it would be nice to reduce duplication.
