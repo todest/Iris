@@ -6,6 +6,9 @@ import net.coderbot.iris.uniforms.SystemTimeUniforms;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.Matrix4f;
 import org.spongepowered.asm.mixin.Final;
+import net.coderbot.iris.uniforms.CapturedRenderingState;
+import net.coderbot.iris.uniforms.SystemTimeUniforms;
+import net.minecraft.util.math.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -36,6 +39,6 @@ public class MixinGameRenderer {
 
 	@Inject(method = "shouldRenderBlockOutline", at = @At("HEAD"), cancellable = true)
 	public void handleTransparentGui(CallbackInfoReturnable<Boolean> cir) {
-		if(this.client.currentScreen instanceof TransparentBackgroundScreen && !((TransparentBackgroundScreen)this.client.currentScreen).renderHud()) cir.setReturnValue(false);
+		if (this.client.currentScreen instanceof TransparentBackgroundScreen && !((TransparentBackgroundScreen)this.client.currentScreen).renderHud()) cir.setReturnValue(false);
 	}
 }

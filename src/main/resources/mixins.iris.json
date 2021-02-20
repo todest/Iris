@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_8",
   "client": [
     "MixinMinecraftClient",
+    "MixinBakedQuad",
     "MixinDebugHud",
     "MixinGameRenderer",
     "MixinGlStateManager",

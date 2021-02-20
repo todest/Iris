@@ -49,6 +49,17 @@ public class Iris implements ClientModInitializer {
 
 	public static KeyBinding reloadKeybind;
 
+
+	/**
+	 * Controls whether directional shading was previously disabled
+	 */
+	private static boolean wasDisablingDirectionalShading = false;
+
+	/**
+	 * Controls whether BakedQuad will or will not use directional shading.
+	 */
+	private static boolean disableDirectionalShading = false;
+
 	@Override
 	public void onInitializeClient() {
 		FabricLoader.getInstance().getModContainer("sodium").ifPresent(
@@ -57,7 +68,7 @@ public class Iris implements ClientModInitializer {
 
 				// A lot of people are reporting visual bugs with Iris + Sodium. This makes it so that if we don't have
 				// the right fork of Sodium, it will just crash.
-				if (!versionString.equals("IRIS-SNAPSHOT")) {
+				if (!versionString.startsWith("IRIS-SNAPSHOT")) {
 					throw new IllegalStateException("You do not have a compatible version of Sodium installed! You have " + versionString + " but IRIS-SNAPSHOT is expected");
 				}
 			}
@@ -80,6 +91,9 @@ public class Iris implements ClientModInitializer {
 		}
 
 		loadShaderPack();
+
+		loadShaderPack();
+		wasDisablingDirectionalShading = disableDirectionalShading;
 
 		reloadKeybind = KeyBindingHelper.registerKeyBinding(new KeyBinding("iris.keybind.reload", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_R, "iris.keybinds"));
 
@@ -145,6 +159,8 @@ public class Iris implements ClientModInitializer {
 		}
 
 		logger.info("Using shaderpack: " + name);
+		disableDirectionalShading = true;
+
 		return true;
 	}
 
@@ -194,6 +210,7 @@ public class Iris implements ClientModInitializer {
 		getIrisConfig().setShaderPackName("(internal)");
 
 		logger.info("Using internal shaders");
+		disableDirectionalShading = false;
 	}
 
 	private static void loadNoOpShaderPack() {
@@ -210,6 +227,8 @@ public class Iris implements ClientModInitializer {
 	}
 
 	public static void reload() throws IOException {
+		wasDisablingDirectionalShading = disableDirectionalShading;
+
 		// allows shaderpacks to be changed at runtime
 		irisConfig.initialize();
 
@@ -221,7 +240,8 @@ public class Iris implements ClientModInitializer {
 
 		// If Sodium is loaded, we need to reload the world renderer to properly recreate the ChunkRenderBackend
 		// Otherwise, the terrain shaders won't be changed properly.
-		if (FabricLoader.getInstance().isModLoaded("sodium")) {
+		// We also need to re-render all of the chunks if there is a change in the directional shading setting
+		if (FabricLoader.getInstance().isModLoaded("sodium") || wasDisablingDirectionalShading != disableDirectionalShading) {
 			MinecraftClient.getInstance().worldRenderer.reload();
 		}
 	}
@@ -286,5 +306,9 @@ public class Iris implements ClientModInitializer {
 
 	public static IrisConfig getIrisConfig() {
 		return irisConfig;
+	}
+
+	public static boolean shouldDisableDirectionalShading() {
+		return disableDirectionalShading;
 	}
 }
