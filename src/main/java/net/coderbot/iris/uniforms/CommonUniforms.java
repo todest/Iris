@@ -24,6 +24,7 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tag.FluidTags;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.LightType;
@@ -110,8 +111,13 @@ public final class CommonUniforms {
 		if (client.cameraEntity == null || client.world == null) {
 			return Vec2f.ZERO;
 		}
-		int blockLight = client.world.getLightLevel(LightType.BLOCK, client.cameraEntity.getBlockPos());
-		int skyLight = client.world.getLightLevel(LightType.SKY, client.cameraEntity.getBlockPos());
+		BlockPos headPos = new BlockPos(
+				client.cameraEntity.getX(),
+				client.cameraEntity.getEyeY(),
+				client.cameraEntity.getZ()
+		);
+		int blockLight = client.world.getLightLevel(LightType.BLOCK, headPos);
+		int skyLight = client.world.getLightLevel(LightType.SKY, headPos);
 		return new Vec2f(blockLight * 16.0f, skyLight * 16.0f);
 	}
 
