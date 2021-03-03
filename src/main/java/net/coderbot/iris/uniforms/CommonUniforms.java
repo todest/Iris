@@ -44,6 +44,7 @@ public final class CommonUniforms {
 		WorldTimeUniforms.addWorldTimeUniforms(uniforms);
 		SystemTimeUniforms.addSystemTimeUniforms(uniforms);
 		CelestialUniforms.addCelestialUniforms(uniforms);
+		WeatherUniforms.addWeatherUniforms(uniforms);
 		IdMapUniforms.addIdMapUniforms(uniforms, idMap);
 		MatrixUniforms.addMatrixUniforms(uniforms);
 
@@ -61,11 +62,7 @@ public final class CommonUniforms {
 			.uniform1f(PER_FRAME, "screenBrightness", () -> client.options.gamma)
 			.uniform1f(PER_TICK, "playerMood", CommonUniforms::getPlayerMood)
 			.uniform2i(PER_FRAME, "eyeBrightness", CommonUniforms::getEyeBrightness)
-			// TODO: This should be smoothed, but not smoothing it is better than nothing.
 			.uniform2i(PER_FRAME, "eyeBrightnessSmooth", new SmoothedVec2f(10.0f, CommonUniforms::getEyeBrightness))
-			.uniform1f(PER_TICK, "rainStrength", CommonUniforms::getRainStrength)
-			// TODO: This should be smoothed, but not smoothing it is better than nothing.
-			.uniform1f(PER_TICK, "wetness", CommonUniforms::getRainStrength)
 			.uniform3d(PER_FRAME, "skyColor", CommonUniforms::getSkyColor);
 	}
 
@@ -99,14 +96,6 @@ public final class CommonUniforms {
 		}
 
 		return ((ClientPlayerEntity)client.cameraEntity).getMoodPercentage();
-	}
-
-	private static float getRainStrength() {
-		if (client.world == null) {
-			return 0f;
-		}
-
-		return client.world.getRainGradient(CapturedRenderingState.INSTANCE.getTickDelta());
 	}
 
 	private static Vec2f getEyeBrightness() {
