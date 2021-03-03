@@ -21,7 +21,7 @@ public class WeatherUniforms {
 	public static void addWeatherUniforms(UniformHolder uniforms) {
 		uniforms
 			.uniform1f(PER_TICK, "rainStrength", WeatherUniforms::getRainStrength)
-			// TODO: Parse const float wetnessHalflife value from the shaderpack
+			// TODO: Parse the value of const float wetnessHalflife from the shaderpack's fragment configuration
 			.uniform1f(PER_TICK, "wetness", new SmoothedFloat(600.0f, WeatherUniforms::getRainStrength));
         }
 
