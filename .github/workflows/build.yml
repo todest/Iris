@@ -28,5 +28,5 @@ jobs:
     - name: Upload artifacts to Github Actions
       uses: actions/upload-artifact@v2
       with:
-        name: Compiled artifacts for ${{ github.sha }}
+        name: Artifacts
         path: build/libs
