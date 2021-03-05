@@ -9,7 +9,6 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.coderbot.iris.Iris;
 import net.minecraft.util.Util;
 
 public class ConfigOptionParser {
@@ -23,14 +22,14 @@ public class ConfigOptionParser {
 	  Match 0 or more whitespace after that
 	  Match any comments on the option after that
 	 */
-	private static final Pattern BOOLEAN_OPTION_PATTERN = Pattern.compile("^(?<startingComment>//+)?\\s*(?<define>#define)\\s+(?<name>\\w+)\\s*(?<comment>(?<commentChar>//+)(?<commentContent>.*))?$");
+	private static final Pattern BOOLEAN_OPTION_PATTERN = Pattern.compile("(?<startingComment>//+)?\\s*(?<define>#define)\\s+(?<name>\\w+)\\s*(?<comment>(?<commentChar>//+)(?<commentContent>.*))?");
 	/*
 	  Regex for matching ifdef patterns for boolean options
 	  Match the ifdef or ifndef keyword
 	  match whitespace that must be there
 	  match a word that is the name of the keyword
 	 */
-	private static final Pattern IFDEF_IFNDEF_PATTERN = Pattern.compile("^(?<ifdef>#ifdef|#ifndef)\\s+(?<name>\\w+)(?<other>.*)");
+	private static final Pattern IFDEF_IFNDEF_PATTERN = Pattern.compile("(?<ifdef>#ifdef|#ifndef)\\s+(?<name>\\w+)");
 	/*
 	   Regex that matches for integer and float options
 	   Match 1 or more whitespace after #define
@@ -44,14 +43,14 @@ public class ConfigOptionParser {
 	   match 0 or more whitespace
 	   match if there is a comment following the line or not
 	 */
-	private static final Pattern FLOAT_INTEGER_OPTION_PATTERN = Pattern.compile("^(?<define>#define)\\s+(?<name>\\w+)\\s+(?<value>-?[\\d.fF]+)\\s*(?<comment>(?<commentChar>//+)(?<commentContent>.*))?$");
+	private static final Pattern FLOAT_INTEGER_OPTION_PATTERN = Pattern.compile("(?<define>#define)\\s+(?<name>\\w+)\\s+(?<value>-?[\\d.fF]+)\\s*(?<comment>(?<commentChar>//+)(?<commentContent>.*))?");
 	/*
 	 Regex that matches for only integers and not floats
 	 Same as above but in the char class we remove the float specific checks
 		remove matching a "."
 		remove matching a "f" or a "F"
 	 */
-	private static final Pattern INTEGER_OPTION_PATTERN = Pattern.compile("^(?<define>#define)\\s+(?<name>\\w+)\\s+(?<value>-?\\d+)\\s*(?<comment>(?<commentChar>//+)(?<commentContent>.*))?$");
+	private static final Pattern INTEGER_OPTION_PATTERN = Pattern.compile("(?<define>#define)\\s+(?<name>\\w+)\\s+(?<value>-?\\d+)\\s*(?<comment>(?<commentChar>//+)(?<commentContent>.*))?");
 	/*
 	Some shaderpacks like sildurs have #define directives that are named with the program name
 	like #define gbuffers_textured
@@ -98,8 +97,8 @@ public class ConfigOptionParser {
 				String startingComment = group(booleanMatcher, "startingComment");
 				String trailingComment = group(booleanMatcher,"commentContent");
 
-				if (name == null) continue; // Continue if the name is not apparent. Not sure how this is possible if the regex matches, but to be safe, let's ignore it
-
+				if (name == null)
+					continue; //continue if the name is not apparent. Not sure how this is possible if the regex matches, but to be safe, let's ignore it
 
 
 				if (!containsIfDef(lines, name) || name.startsWith("MC_") || IGNORED_PROGRAM_NAMES.contains(name)) {
@@ -155,13 +154,14 @@ public class ConfigOptionParser {
 
 	/**
 	 * Checks if a name has a matching ifdef pattern in the same file
+	 *
 	 * @param lines the file, split
-	 * @param name the name of the boolean option to check ifdef's for
+	 * @param name  the name of the boolean option to check ifdef's for
 	 * @return if the file contains an ifdef or ifndef with the correct name
 	 */
 	private static boolean containsIfDef(List<String> lines, String name) {
 		for (String line : lines) {
-			Matcher ifdef = IFDEF_IFNDEF_PATTERN.matcher(line);
+			Matcher ifdef = IFDEF_IFNDEF_PATTERN.matcher(line.trim());
 			if (ifdef.matches()) {
 				String ifdefname = group(ifdef, "name");
 				if (name.equals(ifdefname)) {
@@ -179,7 +179,7 @@ public class ConfigOptionParser {
 			// If the option is false but there is no comment at the beginning
 			// This indicates that the option in the config is false, but the line is true
 		} else if (!option.getValue() && startingComment == null) {
-			return  "//" + line;
+			return "//" + line;
 		}
 
 		return line;
@@ -187,10 +187,11 @@ public class ConfigOptionParser {
 
 	/**
 	 * Creates an boolean option that is synced with a config based on members of a line
-	 * @param name name of option
-	 * @param comment comment of option
+	 *
+	 * @param name            name of option
+	 * @param comment         comment of option
 	 * @param startingComment the comment in front of "#define" to determine the boolean options default value
-	 * @param config config instance to sync
+	 * @param config          config instance to sync
 	 * @return a new option
 	 */
 	private static Option<Boolean> createBooleanOption(String name, String comment, String startingComment, ShaderPackConfig config) {
@@ -206,10 +207,11 @@ public class ConfigOptionParser {
 
 	/**
 	 * Creates a float option that is synced with a config based on elements of a line
-	 * @param name name of option
+	 *
+	 * @param name    name of option
 	 * @param comment tooltip/comment of option
-	 * @param value value of option
-	 * @param config config instance to sync to
+	 * @param value   value of option
+	 * @param config  config instance to sync to
 	 * @return new float option
 	 */
 	private static Option<Float> createFloatOption(String name, String comment, String value, ShaderPackConfig config) {
@@ -236,10 +238,11 @@ public class ConfigOptionParser {
 
 	/**
 	 * Creates a boolean option based on information contained in a line
-	 * @param name name of the option
+	 *
+	 * @param name    name of the option
 	 * @param comment comment/tooltip of the option
-	 * @param value value of the option
-	 * @param config config instance to sync the value of the option with
+	 * @param value   value of the option
+	 * @param config  config instance to sync the value of the option with
 	 * @return a new synced option
 	 */
 	private static Option<Integer> createIntegerOption(String name, String comment, String value, ShaderPackConfig config) {
@@ -259,7 +262,7 @@ public class ConfigOptionParser {
 			integers = parseArray(array, Integer::parseInt);
 		}
 
-		Option<Integer> integerOption = new Option<>(comment, integers, name, intValue, (string) -> (int)Float.parseFloat(string));//parse as float and cast to string to be flexible
+		Option<Integer> integerOption = new Option<>(comment, integers, name, intValue, (string) -> (int) Float.parseFloat(string));//parse as float and cast to string to be flexible
 
 		integerOption = config.processOption(integerOption);
 		config.addIntegerOption(integerOption);
@@ -268,10 +271,10 @@ public class ConfigOptionParser {
 
 	/**
 	 * Identical to {@link Matcher#group(String)} but instead of throwing an exception if the incorrect argument is entered, it returns null
-	 * @param matcher the matcher to grab a group from
-	 * @param name name of the group
-	 * @return the string representation of that group or null if that name is not in the group or error while parsing groups
 	 *
+	 * @param matcher the matcher to grab a group from
+	 * @param name    name of the group
+	 * @return the string representation of that group or null if that name is not in the group or error while parsing groups
 	 * @see Matcher#group(String)
 	 * @see Matcher#getMatchedGroupIndex(String)  this throws the exception that we catch
 	 */
@@ -285,9 +288,10 @@ public class ConfigOptionParser {
 
 	/**
 	 * Parses a string representation of an array to a list via a function converting a string to the desired type
-	 * @param array the string representation of the array minus commas.
+	 *
+	 * @param array  the string representation of the array minus commas.
 	 * @param parser function that converts string to the desired type
-	 * @param <T> the type that should have the array parsed
+	 * @param <T>    the type that should have the array parsed
 	 * @return a list that contains new values parsed from the function and array
 	 */
 	private static <T> List<T> parseArray(String array, Function<String, T> parser) {
