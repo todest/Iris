@@ -93,8 +93,6 @@ public class Iris implements ClientModInitializer {
 		}
 
 		loadShaderPack();
-
-		loadShaderPack();
 		wasDisablingDirectionalShading = disableDirectionalShading;
 
 		reloadKeybind = KeyBindingHelper.registerKeyBinding(new KeyBinding("iris.keybind.reload", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_R, "iris.keybinds"));
@@ -210,9 +208,9 @@ public class Iris implements ClientModInitializer {
 		}
 
 		getIrisConfig().setShaderPackName("(internal)");
+		disableDirectionalShading = false;
 
 		logger.info("Using internal shaders");
-		disableDirectionalShading = false;
 	}
 
 	private static void loadNoOpShaderPack() {
@@ -223,6 +221,7 @@ public class Iris implements ClientModInitializer {
 			throw new RuntimeException("Failed to load no-op shaderpack!", e);
 		}
 
+		disableDirectionalShading = false;
 		getIrisConfig().setShaderPackName("(off)");
 
 		logger.info("Using no shaders");
