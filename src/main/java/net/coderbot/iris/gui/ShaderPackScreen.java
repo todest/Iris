@@ -105,7 +105,7 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
 
     private void applyChanges() {
         ShaderPackListWidget.ShaderPackEntry entry = this.shaderPacks.getSelected();
-        String name = "(internal)";
+        String name = "(off)";
         if (entry != null) name = entry.getPackName();
         Iris.getIrisConfig().setShaderPackName(name);
         this.shaderProperties.saveProperties();
