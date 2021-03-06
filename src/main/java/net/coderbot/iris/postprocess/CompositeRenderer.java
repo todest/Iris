@@ -9,33 +9,39 @@ import java.util.Objects;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import it.unimi.dsi.fastutil.ints.IntList;
+import net.coderbot.iris.Iris;
 import net.coderbot.iris.gl.framebuffer.GlFramebuffer;
 import net.coderbot.iris.gl.program.Program;
 import net.coderbot.iris.gl.program.ProgramBuilder;
 import net.coderbot.iris.rendertarget.*;
 import net.coderbot.iris.shaderpack.ProgramDirectives;
-import net.coderbot.iris.shaderpack.ShaderPack;
+import net.coderbot.iris.shaderpack.ProgramSet;
+import net.coderbot.iris.shaderpack.ProgramSource;
 import net.coderbot.iris.uniforms.CommonUniforms;
 import org.lwjgl.opengl.GL15C;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.util.Pair;
+import org.lwjgl.opengl.GL20C;
+import org.lwjgl.opengl.GL30C;
 
 public class CompositeRenderer {
 	private final RenderTargets renderTargets;
 
 	private final ImmutableList<Pass> passes;
+	private final ImmutableList<SwapPass> swapPasses;
 	private final GlFramebuffer baseline;
 
 	final CenterDepthSampler centerDepthSampler;
 
-	public CompositeRenderer(ShaderPack pack, RenderTargets renderTargets) {
+	public CompositeRenderer(ProgramSet pack, RenderTargets renderTargets) {
 		centerDepthSampler = new CenterDepthSampler(renderTargets);
 
 		final List<Pair<Program, ProgramDirectives>> programs = new ArrayList<>();
 
-		for (ShaderPack.ProgramSource source : pack.getComposite()) {
+		for (ProgramSource source : pack.getComposite()) {
 			if (source == null || !source.isValid()) {
 				continue;
 			}
@@ -81,10 +87,37 @@ public class CompositeRenderer {
 			}
 		}
 
+		IntList buffersToBeCleared = pack.getPackDirectives().getBuffersToBeCleared();
+		boolean[] willBeCleared = new boolean[RenderTargets.MAX_RENDER_TARGETS];
+
+		buffersToBeCleared.forEach((int buffer) -> {
+			willBeCleared[buffer] = true;
+		});
+
 		this.passes = passes.build();
 		this.renderTargets = renderTargets;
 
 		this.baseline = renderTargets.createFramebufferWritingToMain(new int[] {0});
+
+		// TODO: We don't actually fully swap the content, we merely copy it from alt to main
+		// This works for the most part, but it's not perfect. A better approach would be creating secondary
+		// framebuffers for every other frame, but that would be a lot more complex...
+		ImmutableList.Builder<SwapPass> swapPasses = ImmutableList.builder();
+
+		for (int i = 0; i < stageReadsFromAlt.length; i++) {
+			if (stageReadsFromAlt[i] && !willBeCleared[i]) {
+				SwapPass swap = new SwapPass();
+				swap.from = renderTargets.createFramebufferWritingToAlt(new int[] {i});
+				swap.from.readBuffer(i);
+				swap.targetTexture = renderTargets.get(i).getMainTexture();
+
+				swapPasses.add(swap);
+			}
+		}
+
+		this.swapPasses = swapPasses.build();
+
+		GL30C.glBindFramebuffer(GL30C.GL_READ_FRAMEBUFFER, 0);
 	}
 
 	private static final class Pass {
@@ -97,6 +130,11 @@ public class CompositeRenderer {
 		private void destroy() {
 			this.program.destroy();
 		}
+	}
+
+	private static final class SwapPass {
+		GlFramebuffer from;
+		int targetTexture;
 	}
 
 	public void renderAll() {
@@ -159,6 +197,14 @@ public class CompositeRenderer {
 			//
 			// This is needed for things like on-screen overlays to work properly.
 			FramebufferBlitter.copyDepthBufferContent(this.baseline, main);
+
+			for (SwapPass swapPass : swapPasses) {
+				swapPass.from.bindAsReadBuffer();
+
+				RenderSystem.activeTexture(GL15C.GL_TEXTURE0);
+				RenderSystem.bindTexture(swapPass.targetTexture);
+				GL20C.glCopyTexSubImage2D(GL20C.GL_TEXTURE_2D, 0, 0, 0, 0, 0, baseWidth, baseHeight);
+			}
 		}
 
 		// Make sure to reset the viewport to how it was before... Otherwise weird issues could occur.
@@ -183,7 +229,7 @@ public class CompositeRenderer {
 	}
 
 	// TODO: Don't just copy this from ShaderPipeline
-	private Pair<Program, ProgramDirectives> createProgram(ShaderPack.ProgramSource source) {
+	private Pair<Program, ProgramDirectives> createProgram(ProgramSource source) {
 		// TODO: Properly handle empty shaders
 		Objects.requireNonNull(source.getVertexSource());
 		Objects.requireNonNull(source.getFragmentSource());
@@ -197,7 +243,7 @@ public class CompositeRenderer {
 			throw new RuntimeException("Shader compilation failed!", e);
 		}
 
-		CommonUniforms.addCommonUniforms(builder, source.getParent().getIdMap());
+		CommonUniforms.addCommonUniforms(builder, source.getParent().getPack().getIdMap());
 		PostProcessUniforms.addPostProcessUniforms(builder, this);
 
 		return new Pair<>(builder.build(), source.getDirectives());

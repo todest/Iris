@@ -8,6 +8,7 @@ import net.coderbot.iris.Iris;
 import net.coderbot.iris.gl.framebuffer.GlFramebuffer;
 import net.coderbot.iris.gl.program.ProgramUniforms;
 import net.coderbot.iris.rendertarget.RenderTargets;
+import net.coderbot.iris.shaderpack.ProgramSource;
 import net.coderbot.iris.shaderpack.ShaderPack;
 import net.coderbot.iris.shaderpack.transform.BuiltinUniformReplacementTransformer;
 import net.coderbot.iris.shaderpack.transform.StringTransformations;
@@ -25,8 +26,8 @@ public class SodiumTerrainPipeline {
 	ShaderPack pack;
 
 	public SodiumTerrainPipeline(ShaderPack pack, RenderTargets renderTargets) {
-		Optional<ShaderPack.ProgramSource> terrainSource = first(pack.getGbuffersTerrain(), pack.getGbuffersTexturedLit(), pack.getGbuffersTextured(), pack.getGbuffersBasic());
-		Optional<ShaderPack.ProgramSource> translucentSource = first(pack.getGbuffersWater(), terrainSource);
+		Optional<ProgramSource> terrainSource = first(Iris.getProgramSet().getGbuffersTerrain(), Iris.getProgramSet().getGbuffersTexturedLit(), Iris.getProgramSet().getGbuffersTextured(), Iris.getProgramSet().getGbuffersBasic());
+		Optional<ProgramSource> translucentSource = first(Iris.getProgramSet().getGbuffersWater(), terrainSource);
 
 		this.pack = pack;
 
@@ -99,7 +100,7 @@ public class SodiumTerrainPipeline {
 	}
 
 	public static SodiumTerrainPipeline create() {
-		return new SodiumTerrainPipeline(Iris.getCurrentPack(), Iris.getRenderTargets());
+		return new SodiumTerrainPipeline(Iris.getCurrentPack(), Iris.getPipeline().getRenderTargets());
 	}
 
 	public Optional<String> getTerrainVertexShaderSource() {
