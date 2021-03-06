@@ -201,6 +201,10 @@ public class ProgramSet {
 		String vertexSource = null;
 		String fragmentSource = null;
 
+		if (root == null) {
+			return new ProgramSource(program, null, null, programSet, pack.getShaderProperties());
+		}
+
 		try {
 			Path vertexPath = root.resolve(program + ".vsh");
 			vertexSource = readFile(vertexPath);

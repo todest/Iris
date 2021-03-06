@@ -61,6 +61,10 @@ public class ShaderPack {
 
 	@Nullable
 	private static ProgramSet loadOverrides(Path root, String subfolder, ShaderPack pack) throws IOException {
+		if (root == null) {
+			return new ProgramSet(null, null, pack);
+		}
+
 		Path sub = root.resolve(subfolder);
 
 		if (Files.exists(sub)) {
