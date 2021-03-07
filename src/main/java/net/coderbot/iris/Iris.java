@@ -354,13 +354,9 @@ public class Iris implements ClientModInitializer {
 		}
 	}
 
-	public static ProgramSet getProgramSet() {
-		return Objects.requireNonNull(currentPack).getProgramSet(lastDimension);
-	}
-
 	public static ShaderPipeline getPipeline() {
 		if (pipeline == null) {
-			pipeline = new ShaderPipeline(getProgramSet());
+			pipeline = new ShaderPipeline(Objects.requireNonNull(currentPack).getProgramSet(lastDimension));
 		}
 
 		return pipeline;
