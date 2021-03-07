@@ -1,6 +1,5 @@
 package net.coderbot.iris.pipeline;
 
-import java.io.IOException;
 import java.util.*;
 
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -33,7 +32,7 @@ import net.minecraft.util.Identifier;
 /**
  * Encapsulates the compiled shader program objects for the currently loaded shaderpack.
  */
-public class ShaderPipeline {
+public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 	private final RenderTargets renderTargets;
 	@Nullable
 	private final Pass basic;
@@ -80,7 +79,7 @@ public class ShaderPipeline {
 	private static final List<GbufferProgram> programStack = new ArrayList<>();
 	private static final List<String> programStackLog = new ArrayList<>();
 
-	public ShaderPipeline(ProgramSet programs) {
+	public DeferredWorldRenderingPipeline(ProgramSet programs) {
 		Objects.requireNonNull(programs);
 
 		this.renderTargets = new RenderTargets(MinecraftClient.getInstance().getFramebuffer(), programs.getPackDirectives());
@@ -122,6 +121,7 @@ public class ShaderPipeline {
 		}
 	}
 
+	@Override
 	public void pushProgram(GbufferProgram program) {
 		checkWorld();
 
@@ -135,6 +135,7 @@ public class ShaderPipeline {
 		programStackLog.add("push:" + program);
 	}
 
+	@Override
 	public void popProgram(GbufferProgram expected) {
 		checkWorld();
 
@@ -160,7 +161,7 @@ public class ShaderPipeline {
 			throw new IllegalStateException("Program stack in invalid state, popped " + popped + " but expected to pop " + expected);
 		}
 
-		if (popped != GbufferProgram.NONE) {
+		if (popped != GbufferProgram.NONE && popped != GbufferProgram.CLEAR) {
 			Pass poppedPass = getPass(popped);
 
 			if (poppedPass != null) {
@@ -233,6 +234,14 @@ public class ShaderPipeline {
 			// are responsible for ensuring that the framebuffer is switched properly.
 			GlProgramManager.useProgram(0);
 			return;
+		} else if (program == GbufferProgram.CLEAR) {
+			// We only want the vanilla clear color to be applied to colortex0.
+			baseline.bind();
+
+			// No geometry should actually be rendered in the CLEAR step, but disable programs to be sure.
+			GlProgramManager.useProgram(0);
+
+			return;
 		}
 
 		Pass pass = getPass(program);
@@ -263,9 +272,15 @@ public class ShaderPipeline {
 		this.baseline.bind();
 	}
 
+	@Override
 	public boolean shouldDisableVanillaEntityShadows() {
 		// TODO: Don't hardcode this for Sildur's
 		// OptiFine seems to disable vanilla shadows when the shaderpack uses shadow mapping?
+		return true;
+	}
+
+	@Override
+	public boolean shouldDisableDirectionalShading() {
 		return true;
 	}
 
@@ -414,7 +429,7 @@ public class ShaderPipeline {
 		}
 	}
 
-	public void prepareRenderTargets() {
+	private void prepareRenderTargets() {
 		// Make sure we're using texture unit 0 for this.
 		RenderSystem.activeTexture(GL15C.GL_TEXTURE0);
 
@@ -429,12 +444,12 @@ public class ShaderPipeline {
 		// Not clearing the depth buffer since there's only one of those and it was already cleared
 		RenderSystem.clearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		RenderSystem.clear(GL11C.GL_COLOR_BUFFER_BIT, MinecraftClient.IS_SYSTEM_MAC);
-
-		// We only want the vanilla clear color to be applied to colortex0
-		baseline.bind();
 	}
 
-	public void copyCurrentDepthTexture() {
+	@Override
+	public void beginTranslucents() {
+		// We need to copy the current depth texture so that depthtex1 and depthtex2 can contain the depth values for
+		// all non-translucent content, as required.
 		baseline.bind();
 		GlStateManager.bindTexture(renderTargets.getDepthTextureNoTranslucents().getTextureId());
 		GL20C.glCopyTexImage2D(GL20C.GL_TEXTURE_2D, 0, GL20C.GL_DEPTH_COMPONENT, 0, 0, renderTargets.getCurrentWidth(), renderTargets.getCurrentHeight(), 0);
@@ -458,7 +473,8 @@ public class ShaderPipeline {
 	// TODO: better way to avoid this global state?
 	private boolean isRenderingWorld = false;
 
-	public void beginWorldRender() {
+	@Override
+	public void beginWorldRendering() {
 		isRenderingWorld = true;
 
 		checkWorld();
@@ -472,11 +488,15 @@ public class ShaderPipeline {
 			throw new IllegalStateException("Program stack before the start of rendering, something has gone very wrong!");
 		}
 
+		// Get ready for world rendering
+		prepareRenderTargets();
+
 		// Default to rendering with BASIC for all unknown content.
 		// This probably isn't the best approach, but it works for now.
 		pushProgram(GbufferProgram.BASIC);
 	}
 
+	@Override
 	public void finalizeWorldRendering() {
 		checkWorld();
 
