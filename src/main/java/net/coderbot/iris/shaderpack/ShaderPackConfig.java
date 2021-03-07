@@ -1,6 +1,6 @@
 package net.coderbot.iris.shaderpack;
 
-import static net.coderbot.iris.Iris.SHADERPACK_DIR;
+import static net.coderbot.iris.Iris.getShaderPackDir;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,7 +21,7 @@ public class ShaderPackConfig {
 
 	public ShaderPackConfig(String name) {
 		// Optifine uses txt files, so we should do the same
-		shaderPackConfigPath = SHADERPACK_DIR.resolve(name + ".txt");
+		shaderPackConfigPath = getShaderPackDir().resolve(name + ".txt");
 		configProperties = new Properties();
 		comment = "This file stores the shaderpack configuration for the shaderpack " + name;
 	}

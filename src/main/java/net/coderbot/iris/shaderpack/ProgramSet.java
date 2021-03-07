@@ -10,13 +10,18 @@ import java.util.Optional;
 
 public class ProgramSet {
 	private final PackDirectives packDirectives;
+
+	private final ProgramSource shadow;
+
+	private final ProgramSource[] shadowcomp;
+	private final ProgramSource[] prepare;
+
 	private final ProgramSource gbuffersBasic;
 	private final ProgramSource gbuffersBeaconBeam;
 	private final ProgramSource gbuffersTextured;
 	private final ProgramSource gbuffersTexturedLit;
 	private final ProgramSource gbuffersTerrain;
 	private final ProgramSource gbuffersDamagedBlock;
-	private final ProgramSource gbuffersWater;
 	private final ProgramSource gbuffersSkyBasic;
 	private final ProgramSource gbuffersSkyTextured;
 	private final ProgramSource gbuffersClouds;
@@ -26,6 +31,13 @@ public class ProgramSet {
 	private final ProgramSource gbuffersGlint;
 	private final ProgramSource gbuffersEntityEyes;
 	private final ProgramSource gbuffersBlock;
+	private final ProgramSource gbuffersHand;
+
+	private final ProgramSource[] deferred;
+
+	private final ProgramSource gbuffersWater;
+	private final ProgramSource gbuffersHandWater;
+
 	private final ProgramSource[] composite;
 	private final ProgramSource compositeFinal;
 
@@ -35,13 +47,17 @@ public class ProgramSet {
 		this.packDirectives = new PackDirectives();
 		this.pack = pack;
 
+		this.shadow = readProgramSource(root, inclusionRoot, "shadow", this, pack);
+
+		this.shadowcomp = readProgramArray(root, inclusionRoot, "shadowcomp", pack);
+		this.prepare = readProgramArray(root, inclusionRoot, "prepare", pack);
+
 		this.gbuffersBasic = readProgramSource(root, inclusionRoot, "gbuffers_basic", this, pack);
 		this.gbuffersBeaconBeam = readProgramSource(root, inclusionRoot, "gbuffers_beaconbeam", this, pack);
 		this.gbuffersTextured = readProgramSource(root, inclusionRoot, "gbuffers_textured", this, pack);
 		this.gbuffersTexturedLit = readProgramSource(root, inclusionRoot, "gbuffers_textured_lit", this, pack);
 		this.gbuffersTerrain = readProgramSource(root, inclusionRoot, "gbuffers_terrain", this, pack);
 		this.gbuffersDamagedBlock = readProgramSource(root, inclusionRoot, "gbuffers_damagedblock", this, pack);
-		this.gbuffersWater = readProgramSource(root, inclusionRoot, "gbuffers_water", this, pack);
 		this.gbuffersSkyBasic = readProgramSource(root, inclusionRoot, "gbuffers_skybasic", this, pack);
 		this.gbuffersSkyTextured = readProgramSource(root, inclusionRoot, "gbuffers_skytextured", this, pack);
 		this.gbuffersClouds = readProgramSource(root, inclusionRoot, "gbuffers_clouds", this, pack);
@@ -51,16 +67,27 @@ public class ProgramSet {
 		this.gbuffersGlint = readProgramSource(root, inclusionRoot, "gbuffers_armor_glint", this, pack);
 		this.gbuffersEntityEyes = readProgramSource(root, inclusionRoot, "gbuffers_spidereyes", this, pack);
 		this.gbuffersBlock = readProgramSource(root, inclusionRoot, "gbuffers_block", this, pack);
+		this.gbuffersHand = readProgramSource(root, inclusionRoot, "gbuffers_hand", this, pack);
 
-		this.composite = new ProgramSource[16];
+		this.deferred = readProgramArray(root, inclusionRoot, "deferred", pack);
 
-		for (int i = 0; i < this.composite.length; i++) {
+		this.gbuffersWater = readProgramSource(root, inclusionRoot, "gbuffers_water", this, pack);
+		this.gbuffersHandWater = readProgramSource(root, inclusionRoot, "gbuffers_hand_water", this, pack);
+
+		this.composite = readProgramArray(root, inclusionRoot, "composite", pack);
+		this.compositeFinal = readProgramSource(root, inclusionRoot, "final", this, pack);
+	}
+
+	private ProgramSource[] readProgramArray(Path root, Path inclusionRoot, String name, ShaderPack pack) throws IOException {
+		ProgramSource[] programs = new ProgramSource[16];
+
+		for (int i = 0; i < programs.length; i++) {
 			String suffix = i == 0 ? "" : Integer.toString(i);
 
-			this.composite[i] = readProgramSource(root, inclusionRoot, "composite" + suffix, this, pack);
+			programs[i] = readProgramSource(root, inclusionRoot, name + suffix, this, pack);
 		}
 
-		this.compositeFinal = readProgramSource(root, inclusionRoot, "final", this, pack);
+		return programs;
 	}
 
 	private ProgramSet(ProgramSet base, ProgramSet overrides) {
@@ -73,13 +100,17 @@ public class ProgramSet {
 		// TODO: Merge this properly!
 		this.packDirectives = base.packDirectives;
 
+		this.shadow = merge(base.shadow, overrides.shadow);
+
+		this.shadowcomp = merge(base.shadowcomp, overrides.shadowcomp);
+		this.prepare = merge(base.prepare, overrides.prepare);
+
 		this.gbuffersBasic = merge(base.gbuffersBasic, overrides.gbuffersBasic);
 		this.gbuffersBeaconBeam = merge(base.gbuffersBeaconBeam, overrides.gbuffersBeaconBeam);
 		this.gbuffersTextured = merge(base.gbuffersTextured, overrides.gbuffersTextured);
 		this.gbuffersTexturedLit = merge(base.gbuffersTexturedLit, overrides.gbuffersTexturedLit);
 		this.gbuffersTerrain = merge(base.gbuffersTerrain, overrides.gbuffersTerrain);
 		this.gbuffersDamagedBlock = merge(base.gbuffersDamagedBlock, overrides.gbuffersDamagedBlock);
-		this.gbuffersWater = merge(base.gbuffersWater, overrides.gbuffersWater);
 		this.gbuffersSkyBasic = merge(base.gbuffersSkyBasic, overrides.gbuffersSkyBasic);
 		this.gbuffersSkyTextured = merge(base.gbuffersSkyTextured, overrides.gbuffersSkyTextured);
 		this.gbuffersClouds = merge(base.gbuffersClouds, overrides.gbuffersClouds);
@@ -89,16 +120,29 @@ public class ProgramSet {
 		this.gbuffersGlint = merge(base.gbuffersGlint, overrides.gbuffersGlint);
 		this.gbuffersEntityEyes = merge(base.gbuffersEntityEyes, overrides.gbuffersEntityEyes);
 		this.gbuffersBlock = merge(base.gbuffersBlock, overrides.gbuffersBlock);
+		this.gbuffersHand = merge(base.gbuffersHand, overrides.gbuffersHand);
 
-		this.composite = new ProgramSource[16];
+		this.deferred = merge(base.deferred, overrides.deferred);
 
-		for (int i = 0; i < this.composite.length; i++) {
-			String suffix = i == 0 ? "" : Integer.toString(i);
+		this.gbuffersWater = merge(base.gbuffersWater, overrides.gbuffersWater);
+		this.gbuffersHandWater = merge(base.gbuffersHandWater, overrides.gbuffersHandWater);
 
-			this.composite[i] = merge(base.composite[i], overrides.composite[i]);
+		this.composite = merge(base.composite, overrides.composite);
+		this.compositeFinal = merge(base.compositeFinal, overrides.compositeFinal);
+	}
+
+	private static ProgramSource[] merge(ProgramSource[] base, ProgramSource[] override) {
+		ProgramSource[] merged = new ProgramSource[base.length];
+
+		if (override.length != base.length) {
+			throw new IllegalStateException();
 		}
 
-		this.compositeFinal = merge(base.compositeFinal, overrides.compositeFinal);
+		for (int i = 0; i < merged.length; i++) {
+			merged[i] = merge(base[i], override[i]);
+		}
+
+		return merged;
 	}
 
 	private static ProgramSource merge(ProgramSource base, ProgramSource override) {
@@ -115,6 +159,18 @@ public class ProgramSet {
 		}
 
 		return new ProgramSet(base, overrides);
+	}
+
+	public Optional<ProgramSource> getShadow() {
+		return shadow.requireValid();
+	}
+
+	public ProgramSource[] getShadowComposite() {
+		return shadowcomp;
+	}
+
+	public ProgramSource[] getPrepare() {
+		return prepare;
 	}
 
 	public Optional<ProgramSource> getGbuffersBasic() {
@@ -139,10 +195,6 @@ public class ProgramSet {
 
 	public Optional<ProgramSource> getGbuffersDamagedBlock() {
 		return gbuffersDamagedBlock.requireValid();
-	}
-
-	public Optional<ProgramSource> getGbuffersWater() {
-		return gbuffersWater.requireValid();
 	}
 
 	public Optional<ProgramSource> getGbuffersSkyBasic() {
@@ -179,6 +231,22 @@ public class ProgramSet {
 
 	public Optional<ProgramSource> getGbuffersBlock() {
 		return gbuffersBlock.requireValid();
+	}
+
+	public Optional<ProgramSource> getGbuffersHand() {
+		return gbuffersHand.requireValid();
+	}
+
+	public ProgramSource[] getDeferred() {
+		return deferred;
+	}
+
+	public Optional<ProgramSource> getGbuffersWater() {
+		return gbuffersWater.requireValid();
+	}
+
+	public Optional<ProgramSource> getGbuffersHandWater() {
+		return gbuffersHandWater.requireValid();
 	}
 
 	public ProgramSource[] getComposite() {
