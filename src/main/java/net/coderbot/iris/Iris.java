@@ -243,8 +243,8 @@ public class Iris implements ClientModInitializer {
 		logger.info("Using no shaders");
 		currentPackName = "(off)";
 
-		shadersDisabled = true;
-		internal = false;
+		shadersDisabled = false;
+		internal = true;
 	}
 
 	public static void reload() throws IOException {
@@ -259,7 +259,6 @@ public class Iris implements ClientModInitializer {
 
 		// If Sodium is loaded, we need to reload the world renderer to properly recreate the ChunkRenderBackend
 		// Otherwise, the terrain shaders won't be changed properly.
-		// We also need to re-render all of the chunks if there is a change in the directional shading setting
 		if (FabricLoader.getInstance().isModLoaded("sodium")) {
 			MinecraftClient.getInstance().worldRenderer.reload();
 		}
@@ -313,9 +312,12 @@ public class Iris implements ClientModInitializer {
 	private static WorldRenderingPipeline createPipeline(DimensionId dimensionId) {
 		ProgramSet programs = Objects.requireNonNull(currentPack).getProgramSet(dimensionId);
 
-		if (shadersDisabled) {
-			return new FixedFunctionWorldRenderingPipeline();
-		} else if (internal) {
+		// Currently still using DeferredWorldRenderingPipeline with shaders disabled because of weird rendering issues
+		// switching to a shaderpack from off with FixedFunctionWorldRenderingPipeline
+//		if (shadersDisabled) {
+//			return new FixedFunctionWorldRenderingPipeline();
+//		} else
+		if (internal) {
 			return new InternalWorldRenderingPipeline(programs);
 		} else {
 			return new DeferredWorldRenderingPipeline(programs);

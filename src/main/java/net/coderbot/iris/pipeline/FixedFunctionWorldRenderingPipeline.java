@@ -5,6 +5,9 @@ import net.coderbot.iris.layer.GbufferProgram;
 import net.minecraft.client.MinecraftClient;
 
 public class FixedFunctionWorldRenderingPipeline implements WorldRenderingPipeline {
+	public FixedFunctionWorldRenderingPipeline() {
+
+	}
 	@Override
 	public void beginWorldRendering() {
 		// Use the default Minecraft framebuffer and ensure that no programs are in use
