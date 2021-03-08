@@ -256,12 +256,6 @@ public class Iris implements ClientModInitializer {
 
 		// Load the new shaderpack
 		loadShaderpack();
-
-		// If Sodium is loaded, we need to reload the world renderer to properly recreate the ChunkRenderBackend
-		// Otherwise, the terrain shaders won't be changed properly.
-		if (FabricLoader.getInstance().isModLoaded("sodium")) {
-			MinecraftClient.getInstance().worldRenderer.reload();
-		}
 	}
 
 	/**
@@ -312,12 +306,9 @@ public class Iris implements ClientModInitializer {
 	private static WorldRenderingPipeline createPipeline(DimensionId dimensionId) {
 		ProgramSet programs = Objects.requireNonNull(currentPack).getProgramSet(dimensionId);
 
-		// Currently still using DeferredWorldRenderingPipeline with shaders disabled because of weird rendering issues
-		// switching to a shaderpack from off with FixedFunctionWorldRenderingPipeline
-//		if (shadersDisabled) {
-//			return new FixedFunctionWorldRenderingPipeline();
-//		} else
-		if (internal) {
+		if (shadersDisabled) {
+			return new FixedFunctionWorldRenderingPipeline();
+		} else if (internal) {
 			return new InternalWorldRenderingPipeline(programs);
 		} else {
 			return new DeferredWorldRenderingPipeline(programs);
