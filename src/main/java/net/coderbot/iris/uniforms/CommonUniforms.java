@@ -64,7 +64,7 @@ public final class CommonUniforms {
 			.uniform1f(PER_FRAME, "screenBrightness", () -> client.options.gamma)
 			.uniform1f(PER_TICK, "playerMood", CommonUniforms::getPlayerMood)
 			.uniform2i(PER_FRAME, "eyeBrightness", CommonUniforms::getEyeBrightness)
-                        // TODO: Parse the value of const float eyeBrightnessHalflife from the shaderpack's fragment shader configuration
+      // TODO: Parse the value of const float eyeBrightnessHalflife from the shaderpack's fragment shader configuration
 			.uniform2i(PER_FRAME, "eyeBrightnessSmooth", new SmoothedVec2f(10.0f, CommonUniforms::getEyeBrightness))
 			.uniform3d(PER_FRAME, "skyColor", CommonUniforms::getSkyColor);
 	}
