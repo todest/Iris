@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import net.coderbot.iris.gl.uniform.UniformHolder;
 
 import net.minecraft.util.math.Matrix4f;
+import org.lwjgl.BufferUtils;
 
 public final class MatrixUniforms {
 	private MatrixUniforms() {
@@ -37,7 +38,7 @@ public final class MatrixUniforms {
 			// PERF: Don't copy + allocate this matrix every time?
 			Matrix4f copy = parent.get().copy();
 
-			FloatBuffer buffer = FloatBuffer.allocate(16);
+			FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
 			copy.writeToBuffer(buffer);
 			buffer.rewind();
 
