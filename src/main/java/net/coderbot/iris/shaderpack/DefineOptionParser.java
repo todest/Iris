@@ -300,9 +300,11 @@ public class DefineOptionParser {
 			return list;
 		}
 		// Replace the "[" and "]" of the array
-		array = array.replace("[", "").replace("]", "");
+		array = array.replace("[", "").replace("]", "").trim();
 
-		for (String val : array.split("\\s+")) {
+		String[] splitArray = array.split("\\s+");
+
+		for (String val : splitArray) {
 			list.add(parser.apply(val));
 		}
 
