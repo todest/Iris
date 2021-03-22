@@ -20,6 +20,7 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Util;
 
 import java.io.IOException;
+import java.util.NoSuchElementException;
 
 public class ShaderPackScreen extends Screen implements TransparentBackgroundScreen {
     private ShaderPackListWidget shaderPacks;
@@ -38,7 +39,9 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
 
     public ShaderPackScreen(Screen parent) {
         super(new TranslatableText("options.iris.shaderPackSelection.title"));
-        ScreenStack.push(parent);
+        if (parent != null) {
+			ScreenStack.push(parent);
+		}
     }
 
     @Override
@@ -100,7 +103,11 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
     @Override
     public void onClose() {
 		ScreenStack.pull(this.getClass());
-		client.openScreen(ScreenStack.pop());
+		try {
+			client.openScreen(ScreenStack.pop());
+		} catch (NoSuchElementException e) {
+			client.openScreen(null);
+		}
     }
 
     private void applyChanges() {
