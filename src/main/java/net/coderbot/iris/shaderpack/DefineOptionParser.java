@@ -9,14 +9,13 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.coderbot.iris.Iris;
 import net.minecraft.util.Util;
 
 public class DefineOptionParser {
 	/*
 	 Regex for matching boolean options
-	  Match if or if not the line starts with any number of backslashes that are more than 2 ("//")
-	  Match 0 or more whitespace after the "//"
+	  Match if or if not the line starts with anynumber of backslashes that are more than 2 ("//")
+	  Match 0 or more whitspace after the "//"
 	  Match the #define
 	  Match 1 whitespace after that
 	  Match any letter, number, or underscore name
@@ -96,7 +95,7 @@ public class DefineOptionParser {
 
 				String name = group(booleanMatcher, "name");
 				String startingComment = group(booleanMatcher, "startingComment");
-				String trailingComment = group(booleanMatcher,"commentContent");
+				String trailingComment = group(booleanMatcher, "commentContent");
 
 				if (name == null)
 					continue; //continue if the name is not apparent. Not sure how this is possible if the regex matches, but to be safe, let's ignore it
@@ -195,7 +194,7 @@ public class DefineOptionParser {
 	 * @return a new option
 	 */
 	private static Option<Boolean> createBooleanOption(String name, String comment, String startingComment, ShaderPackConfig config) {
-		boolean defaultValue = startingComment == null;// If the starting comment is not present, then it is default on, otherwise it is off
+		boolean defaultValue = startingComment == null; // If the starting comment is not present, then it is default on, otherwise it is off
 
 		Option<Boolean> booleanOption = new Option<>(comment, Arrays.asList(true, false), name, defaultValue, Boolean::parseBoolean);
 

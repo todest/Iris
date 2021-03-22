@@ -39,7 +39,7 @@ public class Iris implements ClientModInitializer {
 	public static final String MODID = "iris";
 	public static final Logger logger = LogManager.getLogger(MODID);
 
-	private static final Path SHADERPACK_DIR = FabricLoader.getInstance().getGameDir().resolve("shaderpacks");
+	public static final Path SHADERPACK_DIR = FabricLoader.getInstance().getGameDir().resolve("shaderpacks");
 
 	private static ShaderPack currentPack;
 	private static String currentPackName;
@@ -111,11 +111,7 @@ public class Iris implements ClientModInitializer {
 
 		pipelineManager = new PipelineManager(Iris::createPipeline);
 	}
-
-	public static Path getShaderPackDir() {
-		return SHADERPACK_DIR;
-	}
-
+	
 	public static void loadShaderpack() {
 		// Attempt to load an external shaderpack if it is available. Falls back to the no-op shaderpack
 		if (!irisConfig.isNoOp() && !irisConfig.isInternal()) {
