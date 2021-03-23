@@ -46,9 +46,9 @@ public class ProgramBuilder extends ProgramUniforms.Builder {
 		} catch (RuntimeException e) {
 			throw new RuntimeException("Failed to compile vertex shader for program " + name, e);
 		}
-	if(geometrySource != null)
+	if (geometrySource != null)
 		try {
-			geometry = new GlShader(ShaderType.GEOMETRY, name + ".gsh", geometrySource, EMPTY_CONSTANTS);
+			geometry = new GlShader(ShaderType.GEOMETRY, name + ".gsh", geometrySource, MACRO_CONSTANTS);
 		} catch (RuntimeException e) {
 			throw new RuntimeException("Failed to compile geometry shader for program " + name, e);
 		} else geometry = null;
