@@ -46,12 +46,16 @@ public class ProgramBuilder extends ProgramUniforms.Builder {
 		} catch (RuntimeException e) {
 			throw new RuntimeException("Failed to compile vertex shader for program " + name, e);
 		}
-	if (geometrySource != null)
-		try {
-			geometry = new GlShader(ShaderType.GEOMETRY, name + ".gsh", geometrySource, MACRO_CONSTANTS);
-		} catch (RuntimeException e) {
-			throw new RuntimeException("Failed to compile geometry shader for program " + name, e);
-		} else geometry = null;
+
+		if (geometrySource != null) {
+			try {
+				geometry = new GlShader(ShaderType.GEOMETRY, name + ".gsh", geometrySource, MACRO_CONSTANTS);
+			} catch (RuntimeException e) {
+				throw new RuntimeException("Failed to compile geometry shader for program " + name, e);
+			}
+		} else {
+			geometry = null;
+		}
 
 		try {
 			fragment = new GlShader(ShaderType.FRAGMENT, name + ".fsh", fragmentSource, MACRO_CONSTANTS);
@@ -59,10 +63,20 @@ public class ProgramBuilder extends ProgramUniforms.Builder {
 			throw new RuntimeException("Failed to compile fragment shader for program " + name, e);
 		}
 
-		int programId = ProgramCreator.create(name, vertex, geometry, fragment);
+		int programId;
+
+		if (geometry != null) {
+			programId = ProgramCreator.create(name, vertex, geometry, fragment);
+		} else {
+			programId = ProgramCreator.create(name, vertex, fragment);
+		}
 
 		vertex.destroy();
-		if (geometry != null) geometry.destroy();
+
+		if (geometry != null) {
+			geometry.destroy();
+		}
+
 		fragment.destroy();
 
 		return new ProgramBuilder(name, programId);

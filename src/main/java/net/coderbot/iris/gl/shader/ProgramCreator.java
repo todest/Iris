@@ -19,7 +19,7 @@ public class ProgramCreator {
 		GL20C.glBindAttribLocation(program, 12, "at_tangent");
 
 		for (GlShader shader : shaders) {
-			if(shader != null) GL20C.glAttachShader(program, shader.getHandle());
+			GL20C.glAttachShader(program, shader.getHandle());
 		}
 
 		GL20C.glLinkProgram(program);
