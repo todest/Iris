@@ -52,7 +52,6 @@ public final class CommonUniforms {
 		uniforms
 			.uniform1i(ONCE, "tex", TextureUnit.TERRAIN::getSamplerId)
 			.uniform1i(ONCE, "texture", TextureUnit.TERRAIN::getSamplerId)
-			.uniform1i(ONCE, "tex", TextureUnit.TERRAIN::getSamplerId)
 			.uniform1i(ONCE, "lightmap", TextureUnit.LIGHTMAP::getSamplerId)
 			.uniform1b(PER_FRAME, "hideGUI", () -> client.options.hudHidden)
 			.uniform1i(ONCE, "noisetex", () -> 15)
@@ -69,7 +68,7 @@ public final class CommonUniforms {
 			.uniform1f(PER_FRAME, "screenBrightness", () -> client.options.gamma)
 			.uniform1f(PER_TICK, "playerMood", CommonUniforms::getPlayerMood)
 			.uniform2i(PER_FRAME, "eyeBrightness", CommonUniforms::getEyeBrightness)
-      // TODO: Parse the value of const float eyeBrightnessHalflife from the shaderpack's fragment shader configuration
+      		// TODO: Parse the value of const float eyeBrightnessHalflife from the shaderpack's fragment shader configuration
 			.uniform2i(PER_FRAME, "eyeBrightnessSmooth", new SmoothedVec2f(10.0f, CommonUniforms::getEyeBrightness))
 			.uniform3d(PER_FRAME, "skyColor", CommonUniforms::getSkyColor);
 	}
