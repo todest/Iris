@@ -47,9 +47,11 @@ public final class CommonUniforms {
 		WeatherUniforms.addWeatherUniforms(uniforms);
 		IdMapUniforms.addIdMapUniforms(uniforms, idMap);
 		MatrixUniforms.addMatrixUniforms(uniforms);
+		StubUniforms.addStubUniforms(uniforms);
 
 		uniforms
 			.uniform1i(ONCE, "texture", TextureUnit.TERRAIN::getSamplerId)
+			.uniform1i(ONCE, "tex", TextureUnit.TERRAIN::getSamplerId)
 			.uniform1i(ONCE, "lightmap", TextureUnit.LIGHTMAP::getSamplerId)
 			.uniform1b(PER_FRAME, "hideGUI", () -> client.options.hudHidden)
 			.uniform1i(ONCE, "noisetex", () -> 15)
