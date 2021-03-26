@@ -337,18 +337,6 @@ public class ProgramSet {
 		}
 
 		try {
-			Path geometryPath = root.resolve(program + ".gsh");
-			geometrySource = readFile(geometryPath);
-
-			if (geometrySource != null) {
-				geometrySource = ShaderPreprocessor.process(inclusionRoot, geometryPath, geometrySource, pack.getConfig());
-			}
-		} catch (IOException e) {
-			// TODO: Better handling?
-			throw e;
-		}
-
-		try {
 			Path fragmentPath = root.resolve(program + ".fsh");
 			fragmentSource = readFile(fragmentPath);
 
