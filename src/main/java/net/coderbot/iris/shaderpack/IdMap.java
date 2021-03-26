@@ -63,6 +63,10 @@ public class IdMap {
 	 * Loads properties from a properties file in a shaderpack path
 	 */
 	private static Optional<Properties> loadProperties(Path shaderPath, String name) {
+		if (shaderPath == null) {
+			return Optional.empty();
+		}
+
 		String fileContents = readProperties(shaderPath, name);
 		if (fileContents == null) {
 			return Optional.empty();
