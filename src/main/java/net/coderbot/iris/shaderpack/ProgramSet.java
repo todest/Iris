@@ -341,7 +341,7 @@ public class ProgramSet {
 			geometrySource = readFile(geometryPath);
 
 			if (geometrySource != null) {
-				geometrySource = ShaderPreprocessor.process(inclusionRoot, geometryPath, geometrySource);
+				geometrySource = ShaderPreprocessor.process(inclusionRoot, geometryPath, geometrySource, pack.getConfig());
 			}
 		} catch (IOException e) {
 			// TODO: Better handling?
