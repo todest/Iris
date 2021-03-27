@@ -6,9 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +18,6 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.coderbot.iris.Iris;
-import net.minecraft.util.registry.Registry;
 import org.apache.logging.log4j.Level;
 
 import net.minecraft.block.Block;
@@ -46,7 +43,7 @@ public class IdMap {
 	private final Object2IntMap<Identifier> entityIdMap;
 
 	/**
-	 * A map that contains the identifier of an item to the integer value parsed in block.properties
+	 * Maps block states to block ids defined in block.properties
 	 */
 	private Object2IntMap<BlockState> blockPropertiesMap;
 
@@ -57,10 +54,10 @@ public class IdMap {
 
 	IdMap(Path shaderPath) {
 		itemIdMap = loadProperties(shaderPath, "item.properties")
-			.map(IdMap::parseItemIdMap).orElse(Object2IntMaps.emptyMap());
+				.map(IdMap::parseItemIdMap).orElse(Object2IntMaps.emptyMap());
 
 		entityIdMap = loadProperties(shaderPath, "entity.properties")
-			.map(IdMap::parseEntityIdMap).orElse(Object2IntMaps.emptyMap());
+				.map(IdMap::parseEntityIdMap).orElse(Object2IntMaps.emptyMap());
 
 		loadProperties(shaderPath, "block.properties").ifPresent(blockProperties -> {
 			// TODO: This won't parse block states in block.properties properly
@@ -75,10 +72,6 @@ public class IdMap {
 	 * Loads properties from a properties file in a shaderpack path
 	 */
 	private static Optional<Properties> loadProperties(Path shaderPath, String name) {
-		if (shaderPath == null) {
-			return Optional.empty();
-		}
-
 		String fileContents = readProperties(shaderPath, name);
 		if (fileContents == null) {
 			return Optional.empty();
@@ -158,15 +151,6 @@ public class IdMap {
 				try {
 					Identifier identifier = new Identifier(part);
 
-					// TODO: Tempfix so pre-1.13 block id mappings in the currently unrecognized #else condition in
-					//  Sildur's Shaders block.properties are ignored, so they don't override the valid post-1.13
-					//  block id mappings in the #if MC_VERSION >= 11300 condition. Remove when conditionals
-					//  and standard macro preprocessing is implemented.
-
-					// Skip iteration if the block identifier doesn't exist in the registry (so non-existing pre-1.13
-					// block id mappings in Sildur's won't be parsed)
-					if (keyPrefix.equals("block.") && !Registry.BLOCK.getOrEmpty(identifier).isPresent()) continue;
-
 					idMap.put(identifier, intId);
 				} catch (InvalidIdentifierException e) {
 					Iris.logger.warn("Failed to parse an identifier in " + fileName + " for the key " + key + ":");
@@ -235,12 +219,12 @@ public class IdMap {
 		// for example, if we have "minecraft:tall_grass:half=upper"
 		// this list makes sure we only have "minecraft:tall_grass" or just "tall_grass" if "minecraft" is omitted
 		List<String> idParts = Arrays.stream(splitStates)
-			.filter(s -> !s.contains("="))
-			.collect(Collectors.toList());
+				.filter(s -> !s.contains("="))
+				.collect(Collectors.toList());
 
 		List<String> stateParts = Arrays.stream(splitStates)
-			.filter(s -> s.contains("="))
-			.collect(Collectors.toList());
+				.filter(s -> s.contains("="))
+				.collect(Collectors.toList());
 
 
 		// if the list has more than 2 fields, then the pack author accidently put something like minecraft:tall_grass:random, which cannot be parsed
