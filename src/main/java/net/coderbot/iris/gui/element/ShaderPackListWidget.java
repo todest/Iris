@@ -58,7 +58,7 @@ public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPack
                 return false;
             }).collect(Collectors.toList())) {
                 String name = folder.getFileName().toString();
-                if (!name.equals("off") && !name.equals("(internal)")) {
+                if (!name.equals("(off)") && !name.equals("(internal)")) {
                     index++;
                     addEntry(index, name);
                 }
@@ -108,7 +108,7 @@ public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPack
             String name = packName;
             if (textRenderer.getWidth(new LiteralText(name).formatted(Formatting.BOLD)) > this.list.width - 8) {
                 char[] cs = packName.toCharArray();
-                name = String.copyValueOf(Arrays.copyOfRange(cs, 0, Math.min(cs.length, (int)(((float)this.list.width - 14) / 6)) - 3))+"...";
+                name = String.copyValueOf(Arrays.copyOfRange(cs, 0, Math.min(cs.length, (int)(((float)this.list.width - 14) / 6)) - 3)) + "...";
             }
             MutableText text = new LiteralText(name);
             if (this.isMouseOver(mouseX, mouseY)) text = text.formatted(Formatting.BOLD);

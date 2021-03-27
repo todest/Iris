@@ -6,6 +6,7 @@ import net.coderbot.iris.gui.element.ShaderPackListWidget;
 import net.coderbot.iris.gui.element.PropertyDocumentWidget;
 import net.coderbot.iris.gui.property.*;
 import net.coderbot.iris.shaderpack.Option;
+import net.coderbot.iris.shaderpack.ShaderPack;
 import net.coderbot.iris.shaderpack.ShaderPackConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Element;
@@ -116,7 +117,12 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
         ShaderPackListWidget.ShaderPackEntry entry = this.shaderPacks.getSelected();
         String name = "(off)";
         if (entry != null) name = entry.getPackName();
-        Iris.getIrisConfig().setShaderPackName(name);
+        if (name.equals("(off)")) {
+			Iris.getIrisConfig().setShadersDisabled();
+		} else {
+        	Iris.getIrisConfig().setShadersEnabled();
+		}
+		Iris.getIrisConfig().setShaderPackName(name);
         this.shaderProperties.saveProperties();
 		try {
 			Iris.reload();
@@ -139,7 +145,12 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
 		if (shaderProperties != null) this.shaderProperties.saveProperties();
         this.shaderProperties = new PropertyDocumentWidget(this.client, this.width / 2, this.height, 32, this.height - 58, this.width / 2, this.width, 26);
         shaderProperties.onSave(() -> {
-			ShaderPackConfig config = Iris.getCurrentPack().getConfig();
+        	ShaderPack shaderPack = Iris.getCurrentPack().orElse(null);
+        	if (shaderPack == null) {
+        		return;
+			}
+
+			ShaderPackConfig config = shaderPack.getConfig();
         	for (String pageName : shaderProperties.getPages()) {
 				PropertyList propertyList = shaderProperties.getPage(pageName);
 				propertyList.forEvery(property -> {
@@ -157,7 +168,12 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
 			}
 		});
 		shaderProperties.onLoad(() -> {
-			ShaderPackConfig config = Iris.getCurrentPack().getConfig();
+			ShaderPack shaderPack = Iris.getCurrentPack().orElse(null);
+			if (shaderPack == null) {
+				return;
+			}
+
+			ShaderPackConfig config = shaderPack.getConfig();
 			for (String pageName : shaderProperties.getPages()) {
 				PropertyList propertyList = shaderProperties.getPage(pageName);
 				propertyList.forEvery(property -> {
@@ -192,7 +208,13 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
     }
 
     private void reloadShaderConfig() {
-        this.shaderProperties.setDocument(PropertyDocumentWidget.createShaderpackConfigDocument(this.client.textRenderer, this.width / 2, Iris.getIrisConfig().getShaderPackName(), Iris.getCurrentPack(), this.shaderProperties), "screen");
+    	ShaderPack shaderPack = Iris.getCurrentPack().orElse(null);
+    	if (shaderPack == null) {
+			this.shaderProperties.setDocument(PropertyDocumentWidget.createShaderpackConfigDocument(this.client.textRenderer, this.width / 2, Iris.getIrisConfig().getShaderPackName(), null, this.shaderProperties), "screen");
+			shaderProperties.loadProperties();
+			return;
+		}
+        this.shaderProperties.setDocument(PropertyDocumentWidget.createShaderpackConfigDocument(this.client.textRenderer, this.width / 2, Iris.getIrisConfig().getShaderPackName(), shaderPack, this.shaderProperties), "screen");
     	shaderProperties.loadProperties();
     }
 

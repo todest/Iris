@@ -49,7 +49,7 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
 
     public void goTo(String page) {
         this.clearEntries();
-        for(Property p : getPage(page)) {
+        for (Property p : getPage(page)) {
             this.addEntry(new PropertyEntry(this, p));
         }
         this.currentPage = page;
@@ -61,7 +61,7 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
     }
 
     public PropertyList getPage(String name) {
-    	if(!currentPage.isEmpty()) return document.getOrDefault(name, new PropertyList(new TitleProperty(new TranslatableText("page.iris.notFound").formatted(Formatting.DARK_RED, Formatting.BOLD)), new LinkProperty(this, currentPage, new TranslatableText("option.iris.back"), LinkProperty.Align.CENTER_RIGHT), new Property(new TranslatableText("page.iris.invalid", name).formatted(Formatting.GRAY))));
+    	if (!currentPage.isEmpty()) return document.getOrDefault(name, new PropertyList(new TitleProperty(new TranslatableText("page.iris.notFound").formatted(Formatting.DARK_RED, Formatting.BOLD)), new LinkProperty(this, currentPage, new TranslatableText("option.iris.back"), LinkProperty.Align.CENTER_RIGHT), new Property(new TranslatableText("page.iris.invalid", name).formatted(Formatting.GRAY))));
         return document.getOrDefault(name, new PropertyList(new TitleProperty(new TranslatableText("page.iris.notFound").formatted(Formatting.DARK_RED))));
     }
 
@@ -96,13 +96,22 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
     }
 
     public static Map<String, PropertyList> createShaderpackConfigDocument(TextRenderer tr, int width, String shaderName, ShaderPack pack, PropertyDocumentWidget widget) {
-        Properties shaderProperties = pack.getShaderProperties().asProperties();
-		ShaderPackConfig config = pack.getConfig();
         Map<String, PropertyList> document = new HashMap<>();
         Map<String, String> child2Parent = new HashMap<>();
         int tw = (int)(width * 0.6) - 21;
         int bw = width - 20;
-        if(shaderProperties.isEmpty() || !shaderProperties.containsKey("screen")) {
+
+		if (pack == null) {
+			document.put("screen", new PropertyList(
+					new TitleProperty(new LiteralText(shaderName).formatted(Formatting.BOLD), 0xAAFFFFFF),
+					new Property(GuiUtil.trimmed(tr, "page.iris.noShaders", bw, true, true, Formatting.ITALIC))
+			));
+			return document;
+		}
+
+		Properties shaderProperties = pack.getShaderProperties().asProperties();
+		ShaderPackConfig config = pack.getConfig();
+        if (shaderProperties.isEmpty() || !shaderProperties.containsKey("screen")) {
             document.put("screen", new PropertyList(
                     new TitleProperty(new LiteralText(shaderName).formatted(Formatting.BOLD), 0xAAFFFFFF),
                     new Property(GuiUtil.trimmed(tr, "page.iris.noConfig", bw, true, true, Formatting.ITALIC))
@@ -111,26 +120,26 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
         }
         List<String> sliderOptions = new ArrayList<>();
 		List<String> profiles = new ArrayList<>();
-        for(String s : shaderProperties.stringPropertyNames()) {
-            if(s.equals("sliders")) {
+        for (String s : shaderProperties.stringPropertyNames()) {
+            if (s.equals("sliders")) {
                 sliderOptions.add(shaderProperties.getProperty(s));
-            } else if(s.startsWith("profile.")) {
+            } else if (s.startsWith("profile.")) {
             	profiles.add(s);
 			}
         }
-        for(String s : shaderProperties.stringPropertyNames()) {
-            if(s.startsWith("screen.") || s.equals("screen")) {
+        for (String s : shaderProperties.stringPropertyNames()) {
+            if (s.startsWith("screen.") || s.equals("screen")) {
                 PropertyList page = new PropertyList();
                 boolean subScreen = s.startsWith("screen.");
                 page.add(new TitleProperty(GuiUtil.trimmed(tr, subScreen ? s : shaderName, width - 60, subScreen, true, Formatting.BOLD), 0xAAFFFFFF));
                 String[] screenOptions = shaderProperties.getProperty(s).split(" ");
-                for(String p : screenOptions) {
-                    if(p.equals("<profile>")) {
+                for (String p : screenOptions) {
+                    if (p.equals("<profile>")) {
                         page.add(new StringOptionProperty(profiles, 1, widget, p, GuiUtil.trimmed(tr, "option.iris.profile", tw, true, true), sliderOptions.contains(p), true));
-                    } else if(p.equals("<empty>")) {
-                        if(!Iris.getIrisConfig().getIfCondensedShaderConfig()) page.add(Property.EMPTY);
-                    } else if(p.startsWith("[") && p.endsWith("]")) {
-                        String a = "screen."+String.copyValueOf(Arrays.copyOfRange(p.toCharArray(), 1, p.length() - 1));
+                    } else if (p.equals("<empty>")) {
+                        if (!Iris.getIrisConfig().getIfCondensedShaderConfig()) page.add(Property.EMPTY);
+                    } else if (p.startsWith("[") && p.endsWith("]")) {
+                        String a = "screen." + String.copyValueOf(Arrays.copyOfRange(p.toCharArray(), 1, p.length() - 1));
                         page.add(new LinkProperty(widget, a, GuiUtil.trimmed(tr, a, bw, true, true), LinkProperty.Align.LEFT));
                         child2Parent.put(a, s);
                     } else {
@@ -138,24 +147,24 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
 						Option<Integer> intOption = config.getIntegerOption(p);
 						Option<Float> floatOption = config.getFloatOption(p);
 						Option<Boolean> boolOption = config.getBooleanOption(p);
-						if(intOption != null) {
+						if (intOption != null) {
 							List<Integer> vals = intOption.getAllowedValues();
 							page.add(new IntOptionProperty(vals, vals.indexOf(intOption.getDefaultValue()), widget, p, GuiUtil.trimmed(tr, "option."+p, tw, true, true), sliderOptions.contains(p)));
-						} else if(floatOption != null) {
+						} else if (floatOption != null) {
 							List<Float> vals = floatOption.getAllowedValues();
 							page.add(new FloatOptionProperty(vals, vals.indexOf(floatOption.getDefaultValue()), widget, p, GuiUtil.trimmed(tr, "option."+p, tw, true, true), sliderOptions.contains(p)));
-						} else if(boolOption != null) {
-							page.add(new BooleanOptionProperty(widget, boolOption.getDefaultValue(), p, GuiUtil.trimmed(tr, "option."+p, tw, true, true), sliderOptions.contains(p)));
+						} else if (boolOption != null) {
+							page.add(new BooleanOptionProperty(widget, boolOption.getDefaultValue(), p, GuiUtil.trimmed(tr, "option." + p, tw, true, true), sliderOptions.contains(p)));
 						} else {
-							page.add(new Property(GuiUtil.trimmed(tr, "option."+p, tw, true, true)));
+							page.add(new Property(GuiUtil.trimmed(tr, "option." + p, tw, true, true)));
 						}
                     }
                 }
                 document.put(s, page);
             }
         }
-        for(String child : child2Parent.keySet()) {
-            if(document.containsKey(child)) document.get(child).add(1, new LinkProperty(widget, child2Parent.get(child), new TranslatableText("option.iris.back"), LinkProperty.Align.CENTER_RIGHT));
+        for (String child : child2Parent.keySet()) {
+            if (document.containsKey(child)) document.get(child).add(1, new LinkProperty(widget, child2Parent.get(child), new TranslatableText("option.iris.back"), LinkProperty.Align.CENTER_RIGHT));
         }
         return document;
     }

@@ -35,6 +35,11 @@ public class IrisConfig {
 	private String shaderPackName;
 
 	/**
+	* Whether or not shaders are used for rendering. False to disable all shader-based rendering, true to enable it.
+	*/
+ 	private boolean enableShaders;
+
+	/**
 	 * The UI theme to use. Null if the default Iris UI theme is being used.
 	 */
 	private String uiTheme;
@@ -42,12 +47,13 @@ public class IrisConfig {
 	/**
 	 * Whether to display shader pack config screens in "condensed" view.
 	 */
-	private boolean condenseShaderConfig;
+	private boolean condenseShaderConfig = true;
 
 	private Path propertiesPath;
 
 	public IrisConfig() {
-		shaderPackName = null;
+		shaderPackName = "(off)";
+		enableShaders = false;
 		propertiesPath = FabricLoader.getInstance().getConfigDir().resolve("iris.properties");
 	}
 
@@ -59,20 +65,8 @@ public class IrisConfig {
 	public void initialize() throws IOException {
 		load();
 		if (!Files.exists(propertiesPath)) {
-			if (shaderPackName == null) {
-				shaderPackName = "(off)"; // Save shaderpack as (off) on the first game launch with Iris
-			}
 			save();
 		}
-	}
-
-	/**
-	 * returns whether or not the current shaderpack is no-op
-	 *
-	 * @return if shaders should be off (using no-op shaders)
-	 */
-	public boolean isNoOp() {
-		return shaderPackName != null && shaderPackName.equals("(off)");
 	}
 
 	/**
@@ -126,10 +120,32 @@ public class IrisConfig {
 		return theme;
 	}
 
+	/**
+	 * Determines whether or not shaders are used for rendering.
+	 *
+	 * @return False to disable all shader-based rendering, true to enable shader-based rendering.
+	 */
+	public boolean areShadersEnabled() {
+		return enableShaders;
+	}
+
+	/**
+	 * Disables shaders
+	 */
+	public void setShadersDisabled() {
+		enableShaders = false;
+	}
+
+	/**
+	 * Enables shaders
+	 */
+	public void setShadersEnabled() {
+		enableShaders = true;
+	}
+
 
 	/**
 	 * Gets whether to use condensed view for shader pack configuration.
-	 *
 	 * @return Whether to use condensed view or not
 	 */
 	public boolean getIfCondensedShaderConfig() {
@@ -158,6 +174,7 @@ public class IrisConfig {
 	 */
 	public void read(Properties properties) {
 		shaderPackName = properties.getProperty("shaderPack", this.shaderPackName);
+		enableShaders = Boolean.parseBoolean(properties.getProperty("enableShaders"));
 		uiTheme = properties.getProperty("uiTheme", this.uiTheme);
 		condenseShaderConfig = Boolean.parseBoolean(properties.getProperty("condenseShaderConfig"));
 
@@ -175,6 +192,7 @@ public class IrisConfig {
 		Properties properties = new Properties();
 
 		properties.setProperty("shaderPack", getShaderPackName());
+		properties.setProperty("enableShaders", Boolean.toString(areShadersEnabled()));
 		properties.setProperty("uiTheme", getUITheme().name());
 		properties.setProperty("condenseShaderConfig", Boolean.toString(getIfCondensedShaderConfig()));
 
@@ -203,7 +221,7 @@ public class IrisConfig {
 	 * @throws IOException file exceptions
 	 */
 	public void save() throws IOException {
-		Properties properties = write();
+		Properties properties = this.write();
 		properties.store(Files.newOutputStream(propertiesPath), COMMENT);
 	}
 

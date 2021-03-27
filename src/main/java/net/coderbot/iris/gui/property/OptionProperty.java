@@ -54,9 +54,9 @@ public abstract class OptionProperty<T> extends ValueProperty<T> {
 
     @Override
     public boolean onClicked(double mouseX, double mouseY, int button) {
-        if(isButtonHovered(mouseX, true) && button == 0) {
+        if (isButtonHovered(mouseX, true) && button == 0) {
             GuiUtil.playClickSound(1.025f);
-            if(!isSlider) {
+            if (!isSlider) {
                 cycle();
             }
             return true;

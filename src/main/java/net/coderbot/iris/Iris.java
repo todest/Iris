@@ -2,7 +2,6 @@ package net.coderbot.iris;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.zip.ZipException;
 
@@ -43,7 +42,6 @@ public class Iris implements ClientModInitializer {
 
 	private static ShaderPack currentPack;
 	private static String currentPackName;
-	private static boolean shadersDisabled;
 	private static boolean internal;
 
 	private static PipelineManager pipelineManager;
@@ -111,19 +109,37 @@ public class Iris implements ClientModInitializer {
 
 		pipelineManager = new PipelineManager(Iris::createPipeline);
 	}
-	
+
 	public static void loadShaderpack() {
-		// Attempt to load an external shaderpack if it is available. Falls back to the no-op shaderpack
-		if (!irisConfig.isNoOp() && !irisConfig.isInternal()) {
+		if (!irisConfig.areShadersEnabled()) {
+			logger.info("Shaders are disabled because enableShaders is set to false in iris.properties");
+			setShadersDisabled();
+
+			return;
+		}
+
+		// Attempt to load an external shaderpack if it is available
+		if (!irisConfig.isInternal()) {
 			if (!loadExternalShaderpack(irisConfig.getShaderPackName())) {
-				logger.warn("Falling back to no-op shaders because the external shaderpack could not be loaded");
-				loadNoOpShaderpack();
+				logger.warn("Falling back to normal rendering without shaders because the external shaderpack could not be loaded");
+				setShadersDisabled();
 				currentPackName = "(off) [fallback, check your logs for errors]";
 			}
 		} else if (irisConfig.isInternal()) {
-			loadInternalShaderpack();
+			try {
+				loadInternalShaderpack();
+			} catch (Exception e) {
+				logger.error("Something went terribly wrong, Iris was unable to load the internal shaderpack!");
+				logger.catching(Level.ERROR, e);
+
+				logger.warn("Falling back to normal rendering without shaders because the internal shaderpack could not be loaded");
+				setShadersDisabled();
+				currentPackName = "(off) [fallback, check your logs for errors]";
+			}
 		} else {
-			loadNoOpShaderpack();
+			// Not sure how we could even get to this else, but just in case...
+			logger.info("Shaders were... somehow disabled?");
+			setShadersDisabled();
 		}
 	}
 
@@ -183,8 +199,6 @@ public class Iris implements ClientModInitializer {
 
 		logger.info("Using shaderpack: " + name);
 		currentPackName = name;
-
-		shadersDisabled = false;
 		internal = false;
 
 		return true;
@@ -228,25 +242,17 @@ public class Iris implements ClientModInitializer {
 		logger.info("Using internal shaders");
 		currentPackName = "(internal)";
 
-		shadersDisabled = false;
 		internal = true;
 	}
 
-	private static void loadNoOpShaderpack() {
-		try {
-			currentPack = new ShaderPack(null);
-		} catch (IOException e) {
-			logger.error("Failed to load no-op shaderpack! Something went terribly wrong...");
-			throw new RuntimeException("Failed to load no-op shaderpack!", e);
-		}
+	private static void setShadersDisabled() {
+		currentPack = null;
+		internal = false;
 
+		currentPackName = "(off)";
 		getIrisConfig().setShaderPackName("(off)");
 
 		logger.info("Using no shaders");
-		currentPackName = "(off)";
-
-		shadersDisabled = false;
-		internal = true;
 	}
 
 	public static void reload() throws IOException {
@@ -306,11 +312,14 @@ public class Iris implements ClientModInitializer {
 	}
 
 	private static WorldRenderingPipeline createPipeline(DimensionId dimensionId) {
-		ProgramSet programs = Objects.requireNonNull(currentPack).getProgramSet(dimensionId);
-
-		if (shadersDisabled) {
+		if (currentPack == null) {
+			// Completely disables shader-based rendering
 			return new FixedFunctionWorldRenderingPipeline();
-		} else if (internal) {
+		}
+
+		ProgramSet programs = currentPack.getProgramSet(dimensionId);
+
+		if (internal) {
 			return new InternalWorldRenderingPipeline(programs);
 		} else {
 			return new DeferredWorldRenderingPipeline(programs);
@@ -321,8 +330,8 @@ public class Iris implements ClientModInitializer {
 		return pipelineManager;
 	}
 
-	public static ShaderPack getCurrentPack() {
-		return currentPack;
+	public static Optional<ShaderPack> getCurrentPack() {
+		return Optional.ofNullable(currentPack);
 	}
 
 	public static String getCurrentPackName() {
