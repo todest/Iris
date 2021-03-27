@@ -11,6 +11,8 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.TranslatableText;
 
+import java.util.NoSuchElementException;
+
 public class IrisConfigScreen extends Screen implements TransparentBackgroundScreen {
     protected final IrisConfig config = Iris.getIrisConfig();
     protected PropertyDocumentWidget configProperties;
@@ -73,7 +75,11 @@ public class IrisConfigScreen extends Screen implements TransparentBackgroundScr
     @Override
     public void onClose() {
     	ScreenStack.pull(this.getClass());
-		client.openScreen(ScreenStack.pop());
+		try {
+			client.openScreen(ScreenStack.pop());
+		} catch (NoSuchElementException e) {
+			client.openScreen(null);
+		}
 	}
 
 
