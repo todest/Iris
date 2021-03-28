@@ -122,7 +122,8 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
 		List<String> profiles = new ArrayList<>();
         for (String s : shaderProperties.stringPropertyNames()) {
             if (s.equals("sliders")) {
-                sliderOptions.add(shaderProperties.getProperty(s));
+				String[] sliderProperties = shaderProperties.getProperty(s).split(" ");
+				sliderOptions.addAll(Arrays.asList(sliderProperties));
             } else if (s.startsWith("profile.")) {
             	profiles.add(s);
 			}
@@ -149,10 +150,10 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
 						Option<Boolean> boolOption = config.getBooleanOption(p);
 						if (intOption != null) {
 							List<Integer> vals = intOption.getAllowedValues();
-							page.add(new IntOptionProperty(vals, vals.indexOf(intOption.getDefaultValue()), widget, p, GuiUtil.trimmed(tr, "option."+p, tw, true, true), sliderOptions.contains(p)));
+							page.add(new IntOptionProperty(vals, vals.indexOf(intOption.getDefaultValue()), widget, p, GuiUtil.trimmed(tr, "option." + p, tw, true, true), sliderOptions.contains(p)));
 						} else if (floatOption != null) {
 							List<Float> vals = floatOption.getAllowedValues();
-							page.add(new FloatOptionProperty(vals, vals.indexOf(floatOption.getDefaultValue()), widget, p, GuiUtil.trimmed(tr, "option."+p, tw, true, true), sliderOptions.contains(p)));
+							page.add(new FloatOptionProperty(vals, vals.indexOf(floatOption.getDefaultValue()), widget, p, GuiUtil.trimmed(tr, "option." + p, tw, true, true), sliderOptions.contains(p)));
 						} else if (boolOption != null) {
 							page.add(new BooleanOptionProperty(widget, boolOption.getDefaultValue(), p, GuiUtil.trimmed(tr, "option." + p, tw, true, true), sliderOptions.contains(p)));
 						} else {
