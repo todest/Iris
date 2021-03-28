@@ -47,8 +47,9 @@ public class Iris implements ClientModInitializer {
 	private static PipelineManager pipelineManager;
 	private static IrisConfig irisConfig;
 	private static FileSystem zipFileSystem;
-	private static KeyBinding shaderpackScreenKeybind;
 	private static KeyBinding reloadKeybind;
+	private static KeyBinding toggleShadersKeybind;
+	private static KeyBinding shaderpackScreenKeybind;
 
 	@Override
 	public void onInitializeClient() {
@@ -82,18 +83,16 @@ public class Iris implements ClientModInitializer {
 
 		loadShaderpack();
 
-		shaderpackScreenKeybind = KeyBindingHelper.registerKeyBinding(new KeyBinding("iris.keybind.shaderPackSelection", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_O, "iris.keybinds"));
 		reloadKeybind = KeyBindingHelper.registerKeyBinding(new KeyBinding("iris.keybind.reload", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_R, "iris.keybinds"));
+		toggleShadersKeybind = KeyBindingHelper.registerKeyBinding(new KeyBinding("iris.keybind.toggleShaders", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_K, "iris.keybinds"));
+		shaderpackScreenKeybind = KeyBindingHelper.registerKeyBinding(new KeyBinding("iris.keybind.shaderPackSelection", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_O, "iris.keybinds"));
 
 		ClientTickEvents.END_CLIENT_TICK.register(minecraftClient -> {
-			if (shaderpackScreenKeybind.wasPressed()) {
-				minecraftClient.openScreen(new ShaderPackScreen(minecraftClient.currentScreen));
-			}
-			else if (reloadKeybind.wasPressed()) {
+			if (reloadKeybind.wasPressed()) {
 				try {
 					reload();
 
-					if (minecraftClient.player != null){
+					if (minecraftClient.player != null) {
 						minecraftClient.player.sendMessage(new TranslatableText("iris.shaders.reloaded"), false);
 					}
 
@@ -104,6 +103,45 @@ public class Iris implements ClientModInitializer {
 						minecraftClient.player.sendMessage(new TranslatableText("iris.shaders.reloaded.failure", Throwables.getRootCause(e).getMessage()).formatted(Formatting.RED), false);
 					}
 				}
+			} else if (toggleShadersKeybind.wasPressed()) {
+				IrisConfig config = getIrisConfig();
+				if (config.areShadersEnabled()) {
+					try {
+						config.setShadersDisabled();
+
+						reload();
+						if (minecraftClient.player != null) {
+							minecraftClient.player.sendMessage(new TranslatableText("iris.shaders.toggled", "off"), false);
+						}
+					} catch (Exception e) {
+						Iris.logger.error("Error while toggling shaders!", e);
+
+						if (minecraftClient.player != null) {
+							minecraftClient.player.sendMessage(new TranslatableText("iris.shaders.toggled.failure", Throwables.getRootCause(e).getMessage()).formatted(Formatting.RED), false);
+						}
+					}
+				} else if (!config.getShaderPackName().equals("")) {
+					try {
+						config.setShadersEnabled();
+
+						reload();
+						if (minecraftClient.player != null) {
+							minecraftClient.player.sendMessage(new TranslatableText("iris.shaders.toggled", currentPackName), false);
+						}
+					} catch (Exception e) {
+						Iris.logger.error("Error while toggling shaders!", e);
+
+						if (minecraftClient.player != null) {
+							minecraftClient.player.sendMessage(new TranslatableText("iris.shaders.toggled.failure", Throwables.getRootCause(e).getMessage()).formatted(Formatting.RED), false);
+						}
+					}
+				} else {
+					if (minecraftClient.player != null) {
+						minecraftClient.player.sendMessage(new TranslatableText("iris.shaders.toggled.failure.noShaders"), false);
+					}
+				}
+			} else if (shaderpackScreenKeybind.wasPressed()) {
+				minecraftClient.openScreen(new ShaderPackScreen(minecraftClient.currentScreen));
 			}
 		});
 
@@ -112,9 +150,7 @@ public class Iris implements ClientModInitializer {
 
 	public static void loadShaderpack() {
 		if (!irisConfig.areShadersEnabled()) {
-			logger.info("Shaders are disabled because enableShaders is set to false in iris.properties");
 			setShadersDisabled();
-
 			return;
 		}
 
@@ -197,9 +233,11 @@ public class Iris implements ClientModInitializer {
 			return false;
 		}
 
-		logger.info("Using shaderpack: " + name);
 		currentPackName = name;
 		internal = false;
+		getIrisConfig().setShadersEnabled();
+
+		logger.info("Using shaderpack: " + name);
 
 		return true;
 	}
@@ -249,10 +287,9 @@ public class Iris implements ClientModInitializer {
 		currentPack = null;
 		internal = false;
 
-		currentPackName = "(off)";
-		getIrisConfig().setShaderPackName("(off)");
+		getIrisConfig().setShadersDisabled();
 
-		logger.info("Using no shaders");
+		logger.info("Shaders are disabled");
 	}
 
 	public static void reload() throws IOException {

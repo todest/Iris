@@ -121,12 +121,13 @@ public class ShaderPackScreen extends Screen implements TransparentBackgroundScr
 			Iris.getIrisConfig().setShadersDisabled();
 		} else {
         	Iris.getIrisConfig().setShadersEnabled();
+			Iris.getIrisConfig().setShaderPackName(name);
 		}
-		Iris.getIrisConfig().setShaderPackName(name);
         this.shaderProperties.saveProperties();
 		try {
 			Iris.reload();
 		} catch (IOException e) {
+			Iris.logger.error("An error occurred attempting to apply a new Shaderpack from the Shaderpack Selection Screen");
 			e.printStackTrace();
 		}
         this.reloadShaderConfig();

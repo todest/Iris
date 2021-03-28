@@ -45,14 +45,14 @@ public class IrisConfig {
 	private String uiTheme;
 
 	/**
-	 * Whether to display shader pack config screens in "condensed" view.
+	 * Whether to display shader pack config screens in "condensed" view. Defaults to true.
 	 */
 	private boolean condenseShaderConfig = true;
 
 	private Path propertiesPath;
 
 	public IrisConfig() {
-		shaderPackName = "(off)";
+		shaderPackName = "";
 		enableShaders = false;
 		propertiesPath = FabricLoader.getInstance().getConfigDir().resolve("iris.properties");
 	}
@@ -134,6 +134,12 @@ public class IrisConfig {
 	 */
 	public void setShadersDisabled() {
 		enableShaders = false;
+		try {
+			save();
+		} catch (IOException e) {
+			Iris.logger.error("Error setting shaders disabled!");
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -141,6 +147,12 @@ public class IrisConfig {
 	 */
 	public void setShadersEnabled() {
 		enableShaders = true;
+		try {
+			save();
+		} catch (IOException e) {
+			Iris.logger.error("Error setting shaders enabled!");
+			e.printStackTrace();
+		}
 	}
 
 
@@ -179,7 +191,7 @@ public class IrisConfig {
 		condenseShaderConfig = Boolean.parseBoolean(properties.getProperty("condenseShaderConfig"));
 
 		if (shaderPackName == null) {
-			shaderPackName = "(off)";
+			shaderPackName = "";
 		}
 	}
 
