@@ -6,6 +6,9 @@ import net.coderbot.iris.fantastic.FlushableVertexConsumerProvider;
 import net.coderbot.iris.layer.GbufferProgram;
 import net.coderbot.iris.layer.GbufferPrograms;
 import net.coderbot.iris.pipeline.WorldRenderingPipeline;
+import net.coderbot.iris.shaderpack.Option;
+import net.coderbot.iris.shaderpack.ShaderPack;
+import net.coderbot.iris.shaderpack.ShaderPackConfig;
 import net.coderbot.iris.uniforms.CapturedRenderingState;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.Vector3f;
@@ -93,9 +96,14 @@ public class MixinWorldRenderer {
 	@Inject(method = RENDER_SKY, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/world/ClientWorld;getSkyAngle(F)F"),
 		slice = @Slice(from = @At(value = "FIELD", target = "Lnet/minecraft/client/util/math/Vector3f;POSITIVE_Y:Lnet/minecraft/client/util/math/Vector3f;")))
 	private void iris$renderSky$tiltSun(MatrixStack matrices, float tickDelta, CallbackInfo callback) {
-		// TODO: Don't hardcode the sunPathRotation here
 		if (Iris.getIrisConfig().areShadersEnabled() && !Iris.getIrisConfig().isInternal()) {
-			matrices.multiply(Vector3f.POSITIVE_Z.getDegreesQuaternion(-40.0F));
+			ShaderPackConfig config = Iris.getCurrentPack().map(ShaderPack::getConfig).orElse(null);
+			if (config == null) return;
+
+			Option<Float> sunPathRotation = config.getFloatOption("sunPathRotation");
+			if (sunPathRotation != null) {
+				matrices.multiply(Vector3f.POSITIVE_Z.getDegreesQuaternion(sunPathRotation.getValue()));
+			}
 		}
 	}
 
