@@ -41,7 +41,7 @@ public class MixinWorldRenderer {
 
 	@Unique
 	private boolean skyTextureEnabled;
-	
+
 	@Unique
 	private WorldRenderingPipeline pipeline;
 
@@ -50,7 +50,7 @@ public class MixinWorldRenderer {
 		CapturedRenderingState.INSTANCE.setGbufferModelView(matrices.peek().getModel());
 		CapturedRenderingState.INSTANCE.setTickDelta(tickDelta);
 		pipeline = Iris.getPipelineManager().preparePipeline(Iris.getCurrentDimension());
-		
+
 		pipeline.beginWorldRendering();
 	}
 
@@ -96,15 +96,7 @@ public class MixinWorldRenderer {
 	@Inject(method = RENDER_SKY, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/world/ClientWorld;getSkyAngle(F)F"),
 		slice = @Slice(from = @At(value = "FIELD", target = "Lnet/minecraft/client/util/math/Vector3f;POSITIVE_Y:Lnet/minecraft/client/util/math/Vector3f;")))
 	private void iris$renderSky$tiltSun(MatrixStack matrices, float tickDelta, CallbackInfo callback) {
-		if (Iris.getIrisConfig().areShadersEnabled() && !Iris.getIrisConfig().isInternal()) {
-			ShaderPackConfig config = Iris.getCurrentPack().map(ShaderPack::getConfig).orElse(null);
-			if (config == null) return;
-
-			Option<Float> sunPathRotation = config.getFloatOption("sunPathRotation");
-			if (sunPathRotation != null) {
-				matrices.multiply(Vector3f.POSITIVE_Z.getDegreesQuaternion(sunPathRotation.getValue()));
-			}
-		}
+		matrices.multiply(Vector3f.POSITIVE_Z.getDegreesQuaternion(pipeline.getSunPathRotation()));
 	}
 
 	@Inject(method = RENDER_SKY, at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;enableTexture()V"))
