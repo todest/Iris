@@ -26,8 +26,10 @@ import net.minecraft.fluid.FluidState;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tag.FluidTags;
+import net.minecraft.util.CubicSampler;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.LightType;
@@ -62,7 +64,8 @@ public final class CommonUniforms {
 			.uniform2i(PER_FRAME, "eyeBrightness", CommonUniforms::getEyeBrightness)
       		// TODO: Parse the value of const float eyeBrightnessHalflife from the shaderpack's fragment shader configuration
 			.uniform2i(PER_FRAME, "eyeBrightnessSmooth", new SmoothedVec2f(10.0f, CommonUniforms::getEyeBrightness))
-			.uniform3d(PER_FRAME, "skyColor", CommonUniforms::getSkyColor);
+			.uniform3d(PER_FRAME, "skyColor", CommonUniforms::getSkyColor)
+			.uniform3d(PER_FRAME, "fogColor", CommonUniforms::getFogColor);
 	}
 
 	private static Vec3d getSkyColor() {
@@ -71,6 +74,14 @@ public final class CommonUniforms {
 		}
 
 		return client.world.method_23777(client.cameraEntity.getBlockPos(), CapturedRenderingState.INSTANCE.getTickDelta());
+	}
+
+	private static Vec3d getFogColor() {
+		//Vanilla seems to do this calculation as well instead of just directly using the camera position.
+		Vec3d fogColor = CubicSampler.sampleColor(client.gameRenderer.getCamera().getPos().subtract(2.0D, 2.0D, 2.0D).multiply(0.25D), (x, y, z) -> {
+			return client.world.getSkyProperties().adjustFogColor(Vec3d.unpackRgb(client.world.getBiomeAccess().getBiomeForNoiseGen(x, y, z).getFogColor()), MathHelper.clamp(MathHelper.cos(client.world.getSkyAngle(client.getTickDelta()) * 6.2831855F) * 2.0F + 0.5F, 0.0F, 1.0F));
+		});
+		return fogColor;
 	}
 
 	private static float getBlindness() {
