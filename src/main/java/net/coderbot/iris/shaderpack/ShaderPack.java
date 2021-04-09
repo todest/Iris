@@ -1,5 +1,12 @@
 package net.coderbot.iris.shaderpack;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import net.coderbot.iris.Iris;
+import net.coderbot.iris.uniforms.custom.CustomUniforms;
+import org.apache.logging.log4j.Level;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,6 +28,12 @@ import net.minecraft.world.World;
 import org.apache.logging.log4j.Level;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.function.BiConsumer;
+
 public class ShaderPack {
 	private final ProgramSet base;
 	@Nullable
@@ -32,6 +45,8 @@ public class ShaderPack {
 	private final Map<String, Map<String, String>> langMap;
 	private final ShaderPackConfig config;
 	private final ShaderProperties shaderProperties;
+
+	public final CustomUniforms.Factory customUniforms;
 
 	public ShaderPack(Path root) throws IOException {
 		this.shaderProperties = loadProperties(root, "shaders.properties")
@@ -47,6 +62,7 @@ public class ShaderPack {
 
 		this.idMap = new IdMap(root);
 		this.langMap = parseLangEntries(root);
+		this.customUniforms = shaderProperties.customUniforms;
 		this.config.save();
 	}
 
@@ -67,7 +83,22 @@ public class ShaderPack {
 
 	// TODO: Copy-paste from IdMap, find a way to deduplicate this
 	private static Optional<Properties> loadProperties(Path shaderPath, String name) {
-		Properties properties = new Properties();
+		// FIXME: remove order dependency
+		//  suggestion by https://stackoverflow.com/a/17011319/8707677
+		Properties properties = new Properties(){
+			private transient final Map<Object, Object> map = Object2ObjectMaps.synchronize (
+					new Object2ObjectLinkedOpenHashMap<>());
+			@Override
+			public synchronized Object put(Object key, Object value) {
+				map.put(key, value);
+				return super.put(key,value);
+			}
+
+			@Override
+			public synchronized void forEach(BiConsumer<? super Object, ? super Object> action) {
+				this.map.forEach(action);
+			}
+		};
 
 		if (shaderPath == null) return Optional.empty();
 
@@ -144,7 +175,7 @@ public class ShaderPack {
 			try {
 				properties.load(Files.newInputStream(path));
 			} catch (IOException e) {
-				Iris.logger.error("Error while parsing languages for shaderpacks! Expected File Path: {}", path);
+				Iris.logger.error("Error while net.coderbot.iris.parsing languages for shaderpacks! Expected File Path: {}", path);
 				Iris.logger.catching(Level.ERROR, e);
 			}
 

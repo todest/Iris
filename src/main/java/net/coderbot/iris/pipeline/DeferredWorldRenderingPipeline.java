@@ -1,7 +1,5 @@
 package net.coderbot.iris.pipeline;
 
-import java.util.*;
-
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.coderbot.iris.Iris;
@@ -13,13 +11,18 @@ import net.coderbot.iris.layer.GbufferProgram;
 import net.coderbot.iris.postprocess.CompositeRenderer;
 import net.coderbot.iris.rendertarget.NoiseTexture;
 import net.coderbot.iris.rendertarget.RenderTarget;
-import net.coderbot.iris.rendertarget.SingleColorTexture;
 import net.coderbot.iris.rendertarget.RenderTargets;
+import net.coderbot.iris.rendertarget.SingleColorTexture;
 import net.coderbot.iris.shaderpack.ProgramSet;
 import net.coderbot.iris.shaderpack.ProgramSource;
 import net.coderbot.iris.shadows.EmptyShadowMapRenderer;
-import net.coderbot.iris.uniforms.CommonUniforms;
-import net.coderbot.iris.uniforms.SamplerUniforms;
+import net.coderbot.iris.uniforms.*;
+import net.coderbot.iris.uniforms.custom.CustomUniforms;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.Framebuffer;
+import net.minecraft.client.gl.GlProgramManager;
+import net.minecraft.client.particle.ParticleTextureSheet;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11C;
 import org.lwjgl.opengl.GL15C;
@@ -32,6 +35,8 @@ import net.minecraft.client.gl.GlProgramManager;
 import net.minecraft.client.particle.ParticleTextureSheet;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
+
+import java.util.*;
 
 /**
  * Encapsulates the compiled shader program objects for the currently loaded shaderpack.
@@ -89,8 +94,13 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 
 	private static final Identifier WATER_IDENTIFIER = new Identifier("minecraft", "water");
 
+	private final CustomUniforms.Factory customUniforms;
+
 	public DeferredWorldRenderingPipeline(ProgramSet programs) {
 		Objects.requireNonNull(programs);
+
+		// TODO should we clear this at the end of the constructor?
+		this.customUniforms = programs.getPack().customUniforms;
 
 		this.renderTargets = new RenderTargets(MinecraftClient.getInstance().getFramebuffer(), programs.getPackDirectives());
 		this.waterId = programs.getPack().getIdMap().getBlockProperties().getOrDefault(Registry.BLOCK.get(WATER_IDENTIFIER).getDefaultState(), -1);
@@ -117,7 +127,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 
 		this.clearAltBuffers = renderTargets.createFramebufferWritingToAlt(buffersToBeCleared);
 		this.clearMainBuffers = renderTargets.createFramebufferWritingToMain(buffersToBeCleared);
-		this.baseline = renderTargets.createFramebufferWritingToMain(new int[] {0});
+		this.baseline = renderTargets.createFramebufferWritingToMain(new int[]{0});
 
 		// Don't clobber anything in texture unit 0. It probably won't cause issues, but we're just being cautious here.
 		GlStateManager.activeTexture(GL20C.GL_TEXTURE2);
@@ -181,7 +191,8 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		if (popped != expected) {
 			Iris.logger.fatal("Program stack in invalid state, popped " + popped + " but expected to pop " + expected);
 			Iris.logger.fatal("Program stack content after pop: " + programStack);
-			throw new IllegalStateException("Program stack in invalid state, popped " + popped + " but expected to pop " + expected);
+			throw new IllegalStateException(
+					"Program stack in invalid state, popped " + popped + " but expected to pop " + expected);
 		}
 
 		if (popped != GbufferProgram.NONE && popped != GbufferProgram.CLEAR) {
@@ -333,8 +344,9 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		ProgramBuilder builder;
 
 		try {
-			builder = ProgramBuilder.begin(source.getName(), source.getVertexSource().orElse(null), source.getGeometrySource().orElse(null),
-				source.getFragmentSource().orElse(null));
+			builder = ProgramBuilder.begin(source.getName(), source.getVertexSource().orElse(null),
+					source.getGeometrySource().orElse(null),
+					source.getFragmentSource().orElse(null));
 		} catch (RuntimeException e) {
 			// TODO: Better error handling
 			throw new RuntimeException("Shader compilation failed!", e);
@@ -343,7 +355,20 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		CommonUniforms.addCommonUniforms(builder, source.getParent().getPack().getIdMap(), source.getParent().getPackDirectives());
 		SamplerUniforms.addWorldSamplerUniforms(builder);
 		SamplerUniforms.addDepthSamplerUniforms(builder);
-		GlFramebuffer framebuffer = renderTargets.createFramebufferWritingToMain(source.getDirectives().getDrawBuffers());
+
+		this.customUniforms.buildTo(
+				builder,
+				CameraUniforms::addCameraUniforms,
+				ViewportUniforms::addViewportUniforms,
+				WorldTimeUniforms::addWorldTimeUniforms,
+				SystemTimeUniforms::addSystemTimeUniforms,
+				new CelestialUniforms(source.getParent().getPackDirectives().getSunPathRotation())::addCelestialUniforms,
+				holder -> IdMapUniforms.addIdMapUniforms(holder, source.getParent().getPack().getIdMap()),
+				MatrixUniforms::addMatrixUniforms,
+				CommonUniforms::generalCommonUniforms
+		);
+		GlFramebuffer framebuffer = renderTargets
+				.createFramebufferWritingToMain(source.getDirectives().getDrawBuffers());
 
 		builder.bindAttributeLocation(10, "mc_Entity");
 		builder.bindAttributeLocation(11, "mc_midTexCoord");
@@ -522,7 +547,8 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		// all non-translucent content, as required.
 		baseline.bind();
 		GlStateManager.bindTexture(renderTargets.getDepthTextureNoTranslucents().getTextureId());
-		GL20C.glCopyTexImage2D(GL20C.GL_TEXTURE_2D, 0, GL20C.GL_DEPTH_COMPONENT, 0, 0, renderTargets.getCurrentWidth(), renderTargets.getCurrentHeight(), 0);
+		GL20C.glCopyTexImage2D(GL20C.GL_TEXTURE_2D, 0, GL20C.GL_DEPTH_COMPONENT, 0, 0, renderTargets.getCurrentWidth(),
+				renderTargets.getCurrentHeight(), 0);
 	}
 
 	public static GbufferProgram getProgramForSheet(ParticleTextureSheet sheet) {
@@ -555,7 +581,8 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		}
 
 		if (!programStack.isEmpty()) {
-			throw new IllegalStateException("Program stack before the start of rendering, something has gone very wrong!");
+			throw new IllegalStateException(
+					"Program stack before the start of rendering, something has gone very wrong!");
 		}
 
 		// Get ready for world rendering
@@ -581,7 +608,8 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 			Iris.logger.fatal("Program stack not empty at end of rendering, something has gone very wrong!");
 			Iris.logger.fatal("Program stack log: " + programStackLog);
 			Iris.logger.fatal("Program stack content: " + programStack);
-			throw new IllegalStateException("Program stack not empty at end of rendering, something has gone very wrong!");
+			throw new IllegalStateException(
+					"Program stack not empty at end of rendering, something has gone very wrong!");
 		}
 
 		isRenderingWorld = false;

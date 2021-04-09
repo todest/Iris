@@ -1,14 +1,7 @@
 package net.coderbot.iris.uniforms;
 
-import static net.coderbot.iris.gl.uniform.UniformUpdateFrequency.ONCE;
-import static net.coderbot.iris.gl.uniform.UniformUpdateFrequency.PER_FRAME;
-import static net.coderbot.iris.gl.uniform.UniformUpdateFrequency.PER_TICK;
-
-import java.util.Objects;
-import java.util.function.IntSupplier;
-
+import net.coderbot.iris.gl.uniform.LocationalUniformHolder;
 import net.coderbot.iris.gl.uniform.UniformHolder;
-import net.coderbot.iris.gl.uniform.UniformUpdateFrequency;
 import net.coderbot.iris.shaderpack.IdMap;
 import net.coderbot.iris.shaderpack.PackDirectives;
 import net.coderbot.iris.texunits.TextureUnit;
@@ -34,6 +27,12 @@ import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.LightType;
 
+import java.util.Objects;
+import java.util.function.IntSupplier;
+
+import static net.coderbot.iris.gl.uniform.UniformUpdateFrequency.PER_FRAME;
+import static net.coderbot.iris.gl.uniform.UniformUpdateFrequency.PER_TICK;
+
 public final class CommonUniforms {
 	private static final MinecraftClient client = MinecraftClient.getInstance();
 
@@ -41,17 +40,7 @@ public final class CommonUniforms {
 		// no construction allowed
 	}
 
-	public static void addCommonUniforms(UniformHolder uniforms, IdMap idMap, PackDirectives directives) {
-		CameraUniforms.addCameraUniforms(uniforms);
-		ViewportUniforms.addViewportUniforms(uniforms);
-		WorldTimeUniforms.addWorldTimeUniforms(uniforms);
-		SystemTimeUniforms.addSystemTimeUniforms(uniforms);
-		new CelestialUniforms(directives.getSunPathRotation()).addCelestialUniforms(uniforms);
-		WeatherUniforms.addWeatherUniforms(uniforms);
-		IdMapUniforms.addIdMapUniforms(uniforms, idMap);
-		MatrixUniforms.addMatrixUniforms(uniforms);
-		SamplerUniforms.addCommonSamplerUniforms(uniforms);
-
+	public static void generalCommonUniforms(UniformHolder uniforms){
 		uniforms
 			.uniform1b(PER_FRAME, "hideGUI", () -> client.options.hudHidden)
 			.uniform1f(PER_FRAME, "eyeAltitude", () -> Objects.requireNonNull(client.getCameraEntity()).getEyeY())
@@ -67,6 +56,20 @@ public final class CommonUniforms {
 			.uniform2i(PER_FRAME, "eyeBrightnessSmooth", new SmoothedVec2f(10.0f, CommonUniforms::getEyeBrightness))
 			.uniform3d(PER_FRAME, "skyColor", CommonUniforms::getSkyColor)
 			.uniform3d(PER_FRAME, "fogColor", CommonUniforms::getFogColor);
+	}
+
+	public static void addCommonUniforms(LocationalUniformHolder uniforms, IdMap idMap, PackDirectives directives) {
+		CameraUniforms.addCameraUniforms(uniforms);
+		ViewportUniforms.addViewportUniforms(uniforms);
+		WorldTimeUniforms.addWorldTimeUniforms(uniforms);
+		SystemTimeUniforms.addSystemTimeUniforms(uniforms);
+		new CelestialUniforms(directives.getSunPathRotation()).addCelestialUniforms(uniforms);
+		WeatherUniforms.addWeatherUniforms(uniforms);
+		IdMapUniforms.addIdMapUniforms(uniforms, idMap);
+		MatrixUniforms.addMatrixUniforms(uniforms);
+		SamplerUniforms.addCommonSamplerUniforms(uniforms);
+
+		CommonUniforms.generalCommonUniforms(uniforms);
 	}
 
 	private static Vec3d getSkyColor() {

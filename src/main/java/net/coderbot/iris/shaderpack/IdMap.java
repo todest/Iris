@@ -29,7 +29,7 @@ import net.minecraft.util.InvalidIdentifierException;
 import net.minecraft.util.registry.Registry;
 
 /**
- * A utility class for parsing entries in item.properties, block.properties, and entities.properties files in shaderpacks
+ * A utility class for net.coderbot.iris.parsing entries in item.properties, block.properties, and entities.properties files in shaderpacks
  */
 public class IdMap {
 	/**
