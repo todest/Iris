@@ -47,6 +47,7 @@ public final class CommonUniforms {
 		WorldTimeUniforms.addWorldTimeUniforms(uniforms);
 		SystemTimeUniforms.addSystemTimeUniforms(uniforms);
 		new CelestialUniforms(directives.getSunPathRotation()).addCelestialUniforms(uniforms);
+		WeatherUniforms.addWeatherUniforms(uniforms);
 		IdMapUniforms.addIdMapUniforms(uniforms, idMap);
 		MatrixUniforms.addMatrixUniforms(uniforms);
 		SamplerUniforms.addCommonSamplerUniforms(uniforms);
@@ -77,7 +78,7 @@ public final class CommonUniforms {
 	}
 
 	private static Vec3d getFogColor() {
-		//Vanilla seems to do this calculation as well instead of just directly using the camera position.
+		// Vanilla seems to do this calculation as well instead of just directly using the camera position.
 		Vec3d fogColor = CubicSampler.sampleColor(client.gameRenderer.getCamera().getPos().subtract(2.0D, 2.0D, 2.0D).multiply(0.25D), (x, y, z) -> {
 			return client.world.getSkyProperties().adjustFogColor(Vec3d.unpackRgb(client.world.getBiomeAccess().getBiomeForNoiseGen(x, y, z).getFogColor()), MathHelper.clamp(MathHelper.cos(client.world.getSkyAngle(client.getTickDelta()) * 6.2831855F) * 2.0F + 0.5F, 0.0F, 1.0F));
 		});
