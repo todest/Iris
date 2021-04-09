@@ -6,18 +6,18 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.coderbot.iris.Iris;
+import net.minecraft.block.Blocks;
+import net.minecraft.state.StateManager;
 import org.apache.logging.log4j.Level;
 
 import net.minecraft.block.Block;
@@ -50,7 +50,7 @@ public class IdMap {
 	/**
 	 * A map that contains render layers for blocks in block.properties
 	 */
-	private Map<Identifier, RenderLayer> blockRenderLayerMap = new HashMap<>();
+	private Map<Identifier, RenderLayer> blockRenderLayerMap;
 
 	IdMap(Path shaderPath) {
 		itemIdMap = loadProperties(shaderPath, "item.properties")
@@ -66,6 +66,14 @@ public class IdMap {
 		});
 
 		// TODO: Properly override block render layers
+
+		if (blockPropertiesMap == null) {
+			blockPropertiesMap = Object2IntMaps.emptyMap();
+		}
+
+		if (blockRenderLayerMap == null) {
+			blockRenderLayerMap = Collections.emptyMap();
+		}
 	}
 
 	/**
@@ -185,22 +193,8 @@ public class IdMap {
 			}
 
 			for (String part : value.split(" ")) {
-
-				// adds block state entries if present
-				boolean bl = addBlockStates(part, idMap, intId);
-				if (bl) {
-					// if the blockstate was sucessfully parsed, continue parsing ids
-					continue;
-				}
-
 				try {
-					Identifier identifier = new Identifier(part);
-
-					Block block = Registry.BLOCK.get(identifier);
-
-					block.getStateManager().getStates().forEach(state -> {
-						idMap.put(state, intId);
-					});
+					addBlockStates(part, idMap, intId);
 				} catch (InvalidIdentifierException e) {
 					Iris.logger.warn("Failed to parse an identifier in " + fileName + " for the key " + key + ":");
 					Iris.logger.catching(Level.WARN, e);
@@ -211,78 +205,128 @@ public class IdMap {
 		return Object2IntMaps.unmodifiable(idMap);
 	}
 
-	private static boolean addBlockStates(String entry, Object2IntMap<BlockState> idMap, int intId) {
+	private static void addBlockStates(String entry, Object2IntMap<BlockState> idMap, int intId) throws InvalidIdentifierException {
 		String[] splitStates = entry.split(":");
 
-		// make sure we only get the part of the string that is part of the block id, not the state
-		//
-		// for example, if we have "minecraft:tall_grass:half=upper"
-		// this list makes sure we only have "minecraft:tall_grass" or just "tall_grass" if "minecraft" is omitted
-		List<String> idParts = Arrays.stream(splitStates)
-				.filter(s -> !s.contains("="))
-				.collect(Collectors.toList());
-
-		List<String> stateParts = Arrays.stream(splitStates)
-				.filter(s -> s.contains("="))
-				.collect(Collectors.toList());
-
-
-		// if the list has more than 2 fields, then the pack author accidently put something like minecraft:tall_grass:random, which cannot be parsed
-		// so we just continue the iteration
-		if (idParts.size() > 2) {
-			Iris.logger.warn("block property \"" + entry + "\" could not be parsed!");
-			return false;
+		if (splitStates.length == 0) {
+			// An empty string?
+			return;
 		}
 
+		// Simple cases: no states involved
+		//
+		// The first term MUST be a valid identifier component without an equals sign
+		// The second term, if it does not contain an equals sign, must be a valid identifier component.
+		if (splitStates.length == 1 || splitStates.length == 2 && !splitStates[1].contains("=")) {
+			// We parse this as a normal identifier here.
+			Identifier identifier = new Identifier(entry);
 
-		// join the elements of the list with ":"
-		String idString = String.join(":", idParts);
+			Block block = Registry.BLOCK.get(identifier);
 
-		// if the part does not end with the id string, then the entry is using states and we should parse that
-		if (!entry.endsWith(idString)) {
+			// If the block doesn't exist, by default the registry will return AIR. That probably isn't what we want.
+			// TODO: Assuming that Registry.BLOCK.getDefaultId() == "minecraft:air" here
+			if (block == Blocks.AIR) {
+				return;
+			}
 
-			// if the number of states is greater than one, that means we have found an entry which uses block states
-			Identifier id = new Identifier(idString);
+			for (BlockState state : block.getStateManager().getStates()) {
+				idMap.put(state, intId);
+			}
 
-			BlockState state = Registry.BLOCK.get(id).getDefaultState();
+			return;
+		}
 
-			for (String stateProperty : stateParts) {
-				// split the total property into name/value
-				String[] keyValue = stateProperty.split("=");
+		// Complex case: One or more states involved...
+		int statesStart;
+		Identifier identifier;
 
-				if (keyValue.length < 2) {
-					Iris.logger.warn("Could not parse state entry \"" + stateProperty + "\" for id \"" + idString + "\"");
-					continue;
-				}
+		if (splitStates[1].contains("=")) {
+			// We have an entry of the form "tall_grass:half=upper"
+			statesStart = 1;
+			identifier = new Identifier(splitStates[0]);
+		} else {
+			// We have an entry of the form "minecraft:tall_grass:half=upper"
+			statesStart = 2;
+			identifier = new Identifier(splitStates[0], splitStates[1]);
+		}
 
-				// name of property
-				String name = keyValue[0];
+		// Let's look up the block and make sure that it exists.
+		Block block = Registry.BLOCK.get(identifier);
 
-				//desired value property should have
-				String propertyValue = keyValue[1];
+		// If the block doesn't exist, by default the registry will return AIR. That probably isn't what we want.
+		// TODO: Assuming that Registry.BLOCK.getDefaultId() == "minecraft:air" here
+		if (block == Blocks.AIR && !entry.contains("air")) {
+			Iris.logger.warn("Failed to parse the block ID map entry \"" + entry + "\":");
+			Iris.logger.warn("- There is no block with the name " + identifier + "!");
 
-				//get the property via name
-				Property<?> property = state.getBlock().getStateManager().getProperty(name);
+			return;
+		}
 
-				if (property != null) {
-					//set the state to be the previous state with the new state that we just parsed
-					state = parsePropertyValue(property, propertyValue, state);
-				} else {
-					Iris.logger.warn("Could not parse state entry \"" + stateProperty + "\" for id \"" + idString + "\"");
+		// Once we've determined that the block exists, we must parse each property key=value pair from the state entry.
+		//
+		// These pairs act as a filter on the block states. Thus, the shaderpack does not have to specify all of the
+		// individual block properties itself; rather, it only specifies the parts of the block state that it wishes
+		// to filter in/out.
+		//
+		// For example, some shaderpacks may make it so that hanging lantern blocks wave. They will put something of
+		// the form "lantern:hanging=false" in the ID map as a result. Note, however, that there are also waterlogged
+		// hanging lanterns, which would have "lantern:hanging=false:waterlogged=true". We must make sure that when the
+		// shaderpack author writes "lantern:hanging=false", that we do not just match that individual state, but that
+		// we also match the waterlogged variant too.
+		//
+		// As a result, we first parse each key=value pair in order to determine what properties we need to filter on.
+		Map<Property<?>, String> properties = new HashMap<>();
+		StateManager<Block, BlockState> stateManager = block.getStateManager();
+
+		for (int index = statesStart; index < splitStates.length; index++) {
+			// Split "key=value" into the key and value
+			String[] propertyParts = splitStates[index].split("=");
+
+			if (propertyParts.length != 2) {
+				Iris.logger.warn("Failed to parse the block ID map entry \"" + entry + "\":");
+				Iris.logger.warn("- Block state property filters must be of the form \"key=value\", but " + splitStates[index] + " is not of that form!");
+
+				// TODO: Should we just "continue" here and ignore the invalid property entry?
+				return;
+			}
+
+			String key = propertyParts[0];
+			String value = propertyParts[1];
+
+			Property<?> property = stateManager.getProperty(key);
+
+			if (property == null) {
+				Iris.logger.warn("Error while parsing the block ID map entry \"" + entry + "\":");
+				Iris.logger.warn("- The block " + identifier + " has no property with the name " + key + ", ignoring!");
+
+				continue;
+			}
+
+			properties.put(property, value);
+		}
+
+		// Once we have a list of properties and their expected values, we iterate over every possible state of this
+		// block and check for ones that match the filters. This isn't particularly efficient, but it works!
+		for (BlockState state : stateManager.getStates()) {
+			boolean matches = true;
+
+			for (Map.Entry<Property<?>, String> condition : properties.entrySet()) {
+				// TODO: Do something about these raw types...
+				Property property = condition.getKey();
+				String expectedValue = condition.getValue();
+
+				String actualValue = property.name((Comparable) state.get(property));
+
+				if (!expectedValue.equals(actualValue)) {
+					matches = false;
+					break;
 				}
 			}
 
-			idMap.put(state, intId);
-			return true;
-		} else {
-			return false;
+			if (matches) {
+				idMap.put(state, intId);
+			}
 		}
-	}
-
-	private static <T extends Comparable<T>> BlockState parsePropertyValue(Property<T> property, String string, BlockState state) {
-		Optional<T> optional = property.parse(string);
-		return optional.map(t -> state.with(property, t)).orElse(null);
-
 	}
 
 	/**
