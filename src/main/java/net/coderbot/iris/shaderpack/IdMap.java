@@ -45,7 +45,7 @@ public class IdMap {
 	/**
 	 * Maps block states to block ids defined in block.properties
 	 */
-	private Object2IntMap<BlockState> blockPropertiesMap = Object2IntMaps.emptyMap();
+	private Object2IntMap<BlockState> blockPropertiesMap;
 
 	/**
 	 * A map that contains render layers for blocks in block.properties
