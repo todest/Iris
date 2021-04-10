@@ -98,13 +98,10 @@ public class SodiumTerrainPipeline {
 		return transformations.toString();
 	}
 
-	public static SodiumTerrainPipeline create() {
-		ShaderPack shaderPack = Iris.getCurrentPack().orElse(null);
-		if (shaderPack == null) {
-			return null;
-		}
-
-		return new SodiumTerrainPipeline(Objects.requireNonNull(shaderPack.getProgramSet(Iris.getCurrentDimension())));
+	public static Optional<SodiumTerrainPipeline> create() {
+		return Iris.getCurrentPack().map(
+			pack -> new SodiumTerrainPipeline(Objects.requireNonNull(pack.getProgramSet(Iris.getCurrentDimension())))
+		);
 	}
 
 	public Optional<String> getTerrainVertexShaderSource() {
