@@ -34,6 +34,7 @@ public class MixinGameRenderer {
 
 	@Inject(method = "render(FJZ)V", at = @At("HEAD"))
 	private void iris$beginFrame(float tickDelta, long startTime, boolean tick, CallbackInfo callback) {
+		SystemTimeUniforms.COUNTER.beginFrame();
 		SystemTimeUniforms.TIMER.beginFrame(startTime);
 	}
 
