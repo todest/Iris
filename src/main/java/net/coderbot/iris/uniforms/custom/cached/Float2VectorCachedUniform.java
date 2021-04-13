@@ -9,8 +9,8 @@ import java.util.function.Supplier;
 
 public class Float2VectorCachedUniform extends VectorCachedUniform<Vector2f> {
 	
-	public Float2VectorCachedUniform(UniformUpdateFrequency updateFrequency, Supplier<Vector2f> supplier) {
-		super(updateFrequency, new Vector2f(), supplier);
+	public Float2VectorCachedUniform(String name, UniformUpdateFrequency updateFrequency, Supplier<Vector2f> supplier) {
+		super(name, updateFrequency, new Vector2f(), supplier);
 	}
 	
 	@Override
@@ -19,8 +19,8 @@ public class Float2VectorCachedUniform extends VectorCachedUniform<Vector2f> {
 	}
 	
 	@Override
-	protected void push(){
-		GL21.glUniform2f(this.getLocation(), this.cached.x, this.cached.y);
+	public void push(int location){
+		GL21.glUniform2f(location, this.cached.x, this.cached.y);
 	}
 	
 	@Override

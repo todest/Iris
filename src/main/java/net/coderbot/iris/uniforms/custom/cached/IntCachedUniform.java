@@ -12,8 +12,8 @@ public class IntCachedUniform extends CachedUniform {
 	final private IntSupplier supplier;
 	private int cached;
 	
-	public IntCachedUniform(UniformUpdateFrequency updateFrequency, IntSupplier supplier) {
-		super(updateFrequency);
+	public IntCachedUniform(String name, UniformUpdateFrequency updateFrequency, IntSupplier supplier) {
+		super(name, updateFrequency);
 		this.supplier = supplier;
 	}
 	
@@ -25,8 +25,8 @@ public class IntCachedUniform extends CachedUniform {
 	}
 	
 	@Override
-	protected void push(){
-		GL21.glUniform1i(this.getLocation(), this.cached);
+	public void push(int location){
+		GL21.glUniform1i(location, this.cached);
 	}
 	
 	@Override

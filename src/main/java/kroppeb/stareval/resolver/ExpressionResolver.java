@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import kroppeb.stareval.expression.CallExpression;
 import kroppeb.stareval.expression.ConstantExpression;
 import kroppeb.stareval.expression.Expression;
+import kroppeb.stareval.expression.VariableExpression;
 import kroppeb.stareval.function.*;
 import kroppeb.stareval.token.*;
 
@@ -15,20 +16,20 @@ public class ExpressionResolver {
 	private final FunctionResolver functionResolver;
 	private final Function<String, Type> variableTypeMap;
 	private final boolean enableDebugging;
-	
+
 	private List<String> logs;
-	
+
 	public ExpressionResolver(FunctionResolver functionResolver, Function<String, Type> variableTypeMap) {
 		this(functionResolver, variableTypeMap, false);
 	}
-	
+
 	public ExpressionResolver(FunctionResolver functionResolver, Function<String, Type> variableTypeMap, boolean enableDebugging) {
 		this.functionResolver = functionResolver;
 		this.variableTypeMap = variableTypeMap;
 		this.enableDebugging = enableDebugging;
 	}
-	
-	
+
+
 	public Expression resolveExpression(Type targetType, ExpressionToken expression) {
 		clearLogs();
 		Expression result = resolveExpressionInternal(targetType, expression, true, true);
@@ -37,7 +38,7 @@ public class ExpressionResolver {
 		}
 		throw new RuntimeException("Couldn't resolve: \n" + String.join("\n", extractLogs()));
 	}
-	
+
 	Expression resolveCallExpressionInternal(
 			Type targetType,
 			String name,
@@ -51,7 +52,7 @@ functions:
 			Type[] paramTypes = f.getParameterTypes();
 			if (paramTypes.length != innerLength)
 				continue;
-			
+
 			Expression[] params = new Expression[innerLength];
 			for (int i = 0; i < innerLength; i++) {
 				Expression expression = resolveExpressionInternal(paramTypes[i], inner.get(i),
@@ -63,29 +64,29 @@ functions:
 			// FIXME
 			if (result != null)
 				throw new RuntimeException("Ambiguity");
-			
+
 			result = new CallExpression(f, params);
 		}
 		return result;
 	}
-	
-	
+
+
 	Expression resolveCallExpression(
 			Type targetType,
 			String name,
 			List<ExpressionToken> inner,
 			boolean allowNonImplicit,
 			boolean allowImplicit) {
-		
+
 		log("[DEBUG] resolving function %s with args %s to type %s",
 				name, inner, targetType);
-		
+
 		Expression result = null;
-		
+
 		if (allowNonImplicit) {
 			result = resolveCallExpressionInternal(targetType, name, inner, false);
 		}
-		
+
 		if (result != null) {
 			log("[DEBUG] resolved function %s with args %s to type %s directly",
 					name, inner, targetType);
@@ -95,9 +96,9 @@ functions:
 					name, inner, targetType);
 			return null;
 		}
-		
+
 		List<? extends TypedFunction> casts = this.functionResolver.resolve("<cast>", targetType);
-		
+
 		for (TypedFunction f : casts) {
 			Expression u = resolveCallExpression(f.getParameterTypes()[0], name, inner, true, true);
 			if (u == null)
@@ -111,7 +112,7 @@ functions:
 					name, inner, targetType);
 			return result;
 		}
-		
+
 		result = resolveCallExpressionInternal(targetType, name, inner, true);
 		if (result != null) {
 			log("[DEBUG] resolved function %s with args %s to type %s using implicit inner casts",
@@ -122,32 +123,32 @@ functions:
 		}
 		return result;
 	}
-	
+
 	public List<String> extractLogs() {
 		List<String> old = this.logs;
 		clearLogs();
 		return old;
 	}
-	
+
 	public void clearLogs() {
 		this.logs = new ArrayList<>();
 	}
-	
+
 	private void log(String str) {
 		if (this.enableDebugging)
 			this.logs.add(str);
 	}
-	
+
 	private void log(String str, Object... args) {
 		if (this.enableDebugging)
 			this.logs.add(String.format(str, args));
 	}
-	
+
 	private void log(Supplier<String> str) {
 		if (this.enableDebugging)
 			log(str.get());
 	}
-	
+
 	private Expression resolveExpressionInternal(
 			Type targetType,
 			ExpressionToken expression,
@@ -155,7 +156,7 @@ functions:
 			boolean allowImplicit) {
 		Expression castable;
 		Type innerType;
-		
+
 		log("[DEBUG] resolving %s to type %s (%d%d)",
 				expression, targetType, allowNonImplicit ? 1 : 0, allowImplicit ? 1 : 0);
 		if (expression instanceof UnaryExpressionToken) {
@@ -199,12 +200,19 @@ functions:
 			Type type = this.variableTypeMap.apply(name);
 			if (type == null)
 				throw new RuntimeException("Unknown variable: " + name);
-			if (type.equals(targetType)){
+			if (type.equals(targetType)) {
 				log("[DEBUG] resolved variable %s to type %s", name, targetType);
-				return new Expression() {
+				// TODO: We should add a variable provider (and have this as default)
+				//       doing so would remove the need for a FunctionContext.
+				return new VariableExpression() {
 					@Override
 					public void evaluateTo(FunctionContext c, FunctionReturn r) {
 						c.getVariable(name).evaluateTo(c, r);
+					}
+
+					@Override
+					public Expression partialEval(FunctionContext context, FunctionReturn functionReturn) {
+						return context.hasVariable(name)?context.getVariable(name):this;
 					}
 				};
 			}
@@ -213,16 +221,25 @@ functions:
 						name, type, targetType);
 				return null;
 			}
-			log("[DEBUG] trying implicit casts to resolve variable %s (of type %s) to type %s",
-					name, type, targetType);
-			castable = (c, r) -> c.getVariable(name).evaluateTo(c, r);
+			// TODO duplicate of above
+			castable = new VariableExpression() {
+				@Override
+				public void evaluateTo(FunctionContext c, FunctionReturn r) {
+					c.getVariable(name).evaluateTo(c, r);
+				}
+
+				@Override
+				public Expression partialEval(FunctionContext context, FunctionReturn functionReturn) {
+					return context.hasVariable(name)?context.getVariable(name):this;
+				}
+			};
 			innerType = type;
 		} else {
 			throw new RuntimeException("unexpected token: " + expression.toString());
 		}
-		
+
 		List<? extends TypedFunction> casts = this.functionResolver.resolve("<cast>", targetType);
-		
+
 		for (TypedFunction f : casts) {
 			if (f.getParameterTypes()[0].equals(innerType)) {
 				log("[DEBUG] resolved %s to type %s using implicit casts",
@@ -233,9 +250,9 @@ functions:
 		log("[DEBUG] failed to resolved %s to type %s, even using implicit casts");
 		return null;
 	}
-	
+
 	private final Map<String, ConstantExpression> numbers = new Object2ObjectOpenHashMap<>();
-	
+
 	private ConstantExpression resolveNumber(String s) {
 		return numbers.computeIfAbsent(s, str -> {
 			NumberFormatException p;
@@ -258,7 +275,7 @@ functions:
 					}
 				} else
 					val = Integer.parseInt(str);
-				
+
 				return new ConstantExpression(Type.Int) {
 					@Override
 					public void evaluateTo(FunctionContext context, FunctionReturn functionReturn) {
@@ -268,7 +285,7 @@ functions:
 			} catch (NumberFormatException ex) {
 				p = ex;
 			}
-			
+
 			try {
 				final float res = Float.parseFloat(str);
 				return new ConstantExpression(Type.Float) {

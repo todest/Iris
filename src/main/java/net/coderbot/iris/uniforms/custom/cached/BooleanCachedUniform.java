@@ -12,8 +12,8 @@ public class BooleanCachedUniform extends CachedUniform {
 	final private BooleanSupplier supplier;
 	private boolean cached;
 	
-	public BooleanCachedUniform(UniformUpdateFrequency updateFrequency, BooleanSupplier supplier) {
-		super(updateFrequency);
+	public BooleanCachedUniform(String name, UniformUpdateFrequency updateFrequency, BooleanSupplier supplier) {
+		super(name, updateFrequency);
 		this.supplier = supplier;
 	}
 	
@@ -25,8 +25,8 @@ public class BooleanCachedUniform extends CachedUniform {
 	}
 	
 	@Override
-	protected void push(){
-		GL21.glUniform1i(this.getLocation(), this.cached?1:0);
+	public void push(int location){
+		GL21.glUniform1i(location, this.cached?1:0);
 	}
 	
 	@Override
