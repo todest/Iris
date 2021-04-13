@@ -111,8 +111,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 				holder -> IdMapUniforms.addIdMapUniforms(holder, programs.getPack().getIdMap()),
 				MatrixUniforms::addMatrixUniforms,
 				CommonUniforms::generalCommonUniforms,
-				// FIXME: temp biome
-				holder -> holder.uniform1i(UniformUpdateFrequency.ONCE, "biome", () -> 0)
+				BiomeParameters::biomeParameters
 		);
 
 		this.renderTargets = new RenderTargets(MinecraftClient.getInstance().getFramebuffer(), programs.getPackDirectives());
