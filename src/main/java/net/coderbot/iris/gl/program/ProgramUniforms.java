@@ -12,6 +12,7 @@ import org.lwjgl.opengl.GL20C;
 import java.nio.IntBuffer;
 import java.util.*;
 
+
 public class ProgramUniforms {
 	private final ImmutableList<Uniform> perTick;
 	private final ImmutableList<Uniform> perFrame;

@@ -10,7 +10,8 @@ import net.coderbot.iris.gl.program.ProgramBuilder;
 import net.coderbot.iris.gl.uniform.UniformUpdateFrequency;
 import net.coderbot.iris.layer.GbufferProgram;
 import net.coderbot.iris.postprocess.CompositeRenderer;
-import net.coderbot.iris.rendertarget.NoiseTexture;
+import net.coderbot.iris.rendertarget.NativeImageBackedNoiseTexture;
+import net.coderbot.iris.rendertarget.NativeImageBackedSingleColorTexture;
 import net.coderbot.iris.rendertarget.RenderTarget;
 import net.coderbot.iris.rendertarget.RenderTargets;
 import net.coderbot.iris.rendertarget.SingleColorTexture;
@@ -83,9 +84,9 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 
 	private final EmptyShadowMapRenderer shadowMapRenderer;
 	private final CompositeRenderer compositeRenderer;
-	private final SingleColorTexture normals;
-	private final SingleColorTexture specular;
-	private final NoiseTexture noise;
+	private final NativeImageBackedSingleColorTexture normals;
+	private final NativeImageBackedSingleColorTexture specular;
+	private final NativeImageBackedNoiseTexture noise;
 
 	private final int waterId;
 	private final float sunPathRotation;
@@ -145,11 +146,11 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		GlStateManager.activeTexture(GL20C.GL_TEXTURE2);
 
 		// Create some placeholder PBR textures for now
-		normals = new SingleColorTexture(127, 127, 255, 255);
-		specular = new SingleColorTexture(0, 0, 0, 0);
+		normals = new NativeImageBackedSingleColorTexture(127, 127, 255, 255);
+		specular = new NativeImageBackedSingleColorTexture(0, 0, 0, 0);
 
 		final int noiseTextureResolution = programs.getPackDirectives().getNoiseTextureResolution();
-		noise = new NoiseTexture(noiseTextureResolution, noiseTextureResolution);
+		noise = new NativeImageBackedNoiseTexture(noiseTextureResolution);
 
 		GlStateManager.activeTexture(GL20C.GL_TEXTURE0);
 
@@ -412,11 +413,11 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 			// TODO: Binding the texture here is ugly and hacky. It would be better to have a utility function to set up
 			// a given program and bind the required textures instead.
 			GlStateManager.activeTexture(GL15C.GL_TEXTURE0 + SamplerUniforms.NOISE_TEX);
-			GlStateManager.bindTexture(noise.getTextureId());
+			GlStateManager.bindTexture(noise.getGlId());
 			GlStateManager.activeTexture(GL15C.GL_TEXTURE2);
-			GlStateManager.bindTexture(normals.getTextureId());
+			GlStateManager.bindTexture(normals.getGlId());
 			GlStateManager.activeTexture(GL15C.GL_TEXTURE3);
-			GlStateManager.bindTexture(specular.getTextureId());
+			GlStateManager.bindTexture(specular.getGlId());
 
 			bindTexture(SamplerUniforms.SHADOW_TEX_0, shadowMapRenderer.getDepthTextureId());
 			bindTexture(SamplerUniforms.SHADOW_TEX_1, shadowMapRenderer.getDepthTextureId());
@@ -496,9 +497,9 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		shadowMapRenderer.destroy();
 
 		// Destroy the static samplers (specular, normals, and noise)
-		specular.destroy();
-		normals.destroy();
-		noise.destroy();
+		specular.close();
+		normals.close();
+		noise.close();
 	}
 
 	private static void destroyPasses(Pass... passes) {
