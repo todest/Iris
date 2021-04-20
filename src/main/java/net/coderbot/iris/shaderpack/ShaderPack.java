@@ -7,6 +7,7 @@ import java.util.*;
 
 import net.coderbot.iris.Iris;
 import net.coderbot.iris.gl.texture.InternalTextureFormat;
+import net.coderbot.iris.rendertarget.CustomNoiseTexture;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
@@ -30,6 +31,7 @@ public class ShaderPack {
 
 	private final IdMap idMap;
 	private final Map<String, Map<String, String>> langMap;
+	private final Path customNoiseTexturePath;
 	private final ShaderPackConfig config;
 	private final ShaderProperties shaderProperties;
 
@@ -47,6 +49,11 @@ public class ShaderPack {
 
 		this.idMap = new IdMap(root);
 		this.langMap = parseLangEntries(root);
+		if (shaderProperties.asProperties().containsKey("texture.noise")) {
+			this.customNoiseTexturePath = root.resolve(shaderProperties.asProperties().getProperty("texture.noise"));
+		} else {
+			this.customNoiseTexturePath = null;
+		}
 		this.config.save();
 	}
 
@@ -108,6 +115,10 @@ public class ShaderPack {
 
 	public Map<String, Map<String, String>> getLangMap() {
 		return langMap;
+	}
+
+	public Path getCustomNoiseTexturePath() {
+		return customNoiseTexturePath;
 	}
 
 	public ShaderProperties getShaderProperties() {
