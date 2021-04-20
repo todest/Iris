@@ -7,14 +7,12 @@ import net.coderbot.iris.gl.blending.AlphaTestOverride;
 import net.coderbot.iris.gl.framebuffer.GlFramebuffer;
 import net.coderbot.iris.gl.program.Program;
 import net.coderbot.iris.gl.program.ProgramBuilder;
-import net.coderbot.iris.gl.uniform.UniformUpdateFrequency;
 import net.coderbot.iris.layer.GbufferProgram;
 import net.coderbot.iris.postprocess.CompositeRenderer;
 import net.coderbot.iris.rendertarget.NativeImageBackedNoiseTexture;
 import net.coderbot.iris.rendertarget.NativeImageBackedSingleColorTexture;
 import net.coderbot.iris.rendertarget.RenderTarget;
 import net.coderbot.iris.rendertarget.RenderTargets;
-import net.coderbot.iris.rendertarget.SingleColorTexture;
 import net.coderbot.iris.shaderpack.ProgramSet;
 import net.coderbot.iris.shaderpack.ProgramSource;
 import net.coderbot.iris.shadows.EmptyShadowMapRenderer;
@@ -25,19 +23,22 @@ import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.gl.GlProgramManager;
 import net.minecraft.client.particle.ParticleTextureSheet;
 import net.minecraft.util.Identifier;
+import net.coderbot.iris.rendertarget.*;
+import net.coderbot.iris.uniforms.CommonUniforms;
+import net.coderbot.iris.uniforms.SamplerUniforms;
+import net.minecraft.client.texture.AbstractTexture;
+import org.apache.logging.log4j.Level;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11C;
 import org.lwjgl.opengl.GL15C;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL20C;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.gl.GlProgramManager;
-import net.minecraft.client.particle.ParticleTextureSheet;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -86,7 +87,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 	private final CompositeRenderer compositeRenderer;
 	private final NativeImageBackedSingleColorTexture normals;
 	private final NativeImageBackedSingleColorTexture specular;
-	private final NativeImageBackedNoiseTexture noise;
+	private final AbstractTexture noise;
 
 	private final int waterId;
 	private final float sunPathRotation;
@@ -150,7 +151,21 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		specular = new NativeImageBackedSingleColorTexture(0, 0, 0, 0);
 
 		final int noiseTextureResolution = programs.getPackDirectives().getNoiseTextureResolution();
-		noise = new NativeImageBackedNoiseTexture(noiseTextureResolution);
+		AbstractTexture noiseTexture;
+		if (programs.getPack().getCustomNoiseTexturePath() != null) {
+			Path customNoiseTexturePath = programs.getPack().getCustomNoiseTexturePath();
+			try {
+				noiseTexture = new CustomNoiseTexture(Files.newInputStream(customNoiseTexturePath));
+			} catch (IOException e) {
+				Iris.logger.error("An IOException occurred reading " + customNoiseTexturePath.getFileName() + " from the current shaderpack");
+				Iris.logger.catching(Level.ERROR, e);
+				Iris.logger.info("Falling back to random noise texture...");
+				noiseTexture = new NativeImageBackedNoiseTexture(noiseTextureResolution);
+			}
+		} else {
+			noiseTexture = new NativeImageBackedNoiseTexture(noiseTextureResolution);
+		}
+		noise = noiseTexture;
 
 		GlStateManager.activeTexture(GL20C.GL_TEXTURE0);
 
