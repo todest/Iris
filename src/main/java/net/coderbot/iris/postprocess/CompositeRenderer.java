@@ -1,5 +1,8 @@
 package net.coderbot.iris.postprocess;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -9,6 +12,7 @@ import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.ints.IntList;
+import net.coderbot.iris.Iris;
 import net.coderbot.iris.gl.framebuffer.GlFramebuffer;
 import net.coderbot.iris.gl.program.Program;
 import net.coderbot.iris.gl.program.ProgramBuilder;
@@ -20,6 +24,8 @@ import net.coderbot.iris.shaderpack.ProgramSource;
 import net.coderbot.iris.shadows.EmptyShadowMapRenderer;
 import net.coderbot.iris.uniforms.CommonUniforms;
 import net.coderbot.iris.uniforms.SamplerUniforms;
+import net.minecraft.client.texture.AbstractTexture;
+import org.apache.logging.log4j.Level;
 import org.lwjgl.opengl.GL15C;
 
 import net.minecraft.client.MinecraftClient;
@@ -35,7 +41,7 @@ public class CompositeRenderer {
 	private final ImmutableList<SwapPass> swapPasses;
 	private final GlFramebuffer baseline;
 	private final EmptyShadowMapRenderer shadowMapRenderer;
-	private final NativeImageBackedNoiseTexture noiseTexture;
+	private final AbstractTexture noiseTexture;
 
 	final CenterDepthSampler centerDepthSampler;
 
@@ -125,7 +131,21 @@ public class CompositeRenderer {
 		this.shadowMapRenderer = shadowMapRenderer;
 
 		final int noiseTextureResolution = pack.getPackDirectives().getNoiseTextureResolution();
-		this.noiseTexture = new NativeImageBackedNoiseTexture(noiseTextureResolution);
+		AbstractTexture noiseTexture;
+		if (pack.getPack().getCustomNoiseTexturePath() != null) {
+			Path customNoiseTexturePath = pack.getPack().getCustomNoiseTexturePath();
+			try {
+				noiseTexture = new CustomNoiseTexture(Files.newInputStream(customNoiseTexturePath));
+			} catch (IOException e) {
+				Iris.logger.error("An IOException occurred reading " + customNoiseTexturePath.getFileName() + " from the current shaderpack");
+				Iris.logger.catching(Level.ERROR, e);
+				Iris.logger.info("Falling back to random noise texture...");
+				noiseTexture = new NativeImageBackedNoiseTexture(noiseTextureResolution);
+			}
+		} else {
+			noiseTexture = new NativeImageBackedNoiseTexture(noiseTextureResolution);
+		}
+		this.noiseTexture = noiseTexture;
 	}
 
 	private static final class Pass {

@@ -143,7 +143,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		} else {
 			noiseTexture = new NativeImageBackedNoiseTexture(noiseTextureResolution);
 		}
-		noise = noiseTexture;
+		this.noise = noiseTexture;
 
 		GlStateManager.activeTexture(GL20C.GL_TEXTURE0);
 
