@@ -25,7 +25,6 @@ import net.coderbot.iris.shadows.EmptyShadowMapRenderer;
 import net.coderbot.iris.uniforms.CommonUniforms;
 import net.coderbot.iris.uniforms.SamplerUniforms;
 import net.minecraft.client.texture.AbstractTexture;
-import org.apache.logging.log4j.Level;
 import org.lwjgl.opengl.GL15C;
 
 import net.minecraft.client.MinecraftClient;
@@ -45,7 +44,7 @@ public class CompositeRenderer {
 
 	final CenterDepthSampler centerDepthSampler;
 
-	public CompositeRenderer(ProgramSet pack, RenderTargets renderTargets, EmptyShadowMapRenderer shadowMapRenderer) {
+	public CompositeRenderer(ProgramSet pack, RenderTargets renderTargets, EmptyShadowMapRenderer shadowMapRenderer, AbstractTexture noiseTexture) {
 		centerDepthSampler = new CenterDepthSampler(renderTargets);
 
 		final List<Pair<Program, ProgramDirectives>> programs = new ArrayList<>();
@@ -129,22 +128,6 @@ public class CompositeRenderer {
 		GL30C.glBindFramebuffer(GL30C.GL_READ_FRAMEBUFFER, 0);
 
 		this.shadowMapRenderer = shadowMapRenderer;
-
-		final int noiseTextureResolution = pack.getPackDirectives().getNoiseTextureResolution();
-		AbstractTexture noiseTexture;
-		if (pack.getPack().getCustomNoiseTexturePath() != null) {
-			Path customNoiseTexturePath = pack.getPack().getCustomNoiseTexturePath();
-			try {
-				noiseTexture = new CustomNoiseTexture(Files.newInputStream(customNoiseTexturePath));
-			} catch (IOException e) {
-				Iris.logger.error("An IOException occurred reading " + customNoiseTexturePath.getFileName() + " from the current shaderpack");
-				Iris.logger.catching(Level.ERROR, e);
-				Iris.logger.info("Falling back to random noise texture...");
-				noiseTexture = new NativeImageBackedNoiseTexture(noiseTextureResolution);
-			}
-		} else {
-			noiseTexture = new NativeImageBackedNoiseTexture(noiseTextureResolution);
-		}
 		this.noiseTexture = noiseTexture;
 	}
 
@@ -288,7 +271,5 @@ public class CompositeRenderer {
 		for (Pass renderPass : passes) {
 			renderPass.destroy();
 		}
-
-		noiseTexture.close();
 	}
 }
