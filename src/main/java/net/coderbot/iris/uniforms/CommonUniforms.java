@@ -67,7 +67,6 @@ public final class CommonUniforms {
 		IdMapUniforms.addIdMapUniforms(uniforms, idMap);
 		MatrixUniforms.addMatrixUniforms(uniforms);
 		SamplerUniforms.addCommonSamplerUniforms(uniforms);
-		HardcodedCustomUniforms.addHardcodedCustomUniforms(uniforms);
 
 		CommonUniforms.generalCommonUniforms(uniforms);
 	}
