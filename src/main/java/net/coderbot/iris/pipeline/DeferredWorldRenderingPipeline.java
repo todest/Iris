@@ -148,7 +148,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		GlStateManager.activeTexture(GL20C.GL_TEXTURE0);
 
 		this.shadowMapRenderer = new EmptyShadowMapRenderer(2048);
-		this.compositeRenderer = new CompositeRenderer(programs, renderTargets, shadowMapRenderer);
+		this.compositeRenderer = new CompositeRenderer(programs, renderTargets, shadowMapRenderer, noise);
 	}
 
 	private void checkWorld() {
