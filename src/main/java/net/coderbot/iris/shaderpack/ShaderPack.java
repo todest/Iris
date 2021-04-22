@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import net.coderbot.iris.Iris;
@@ -62,7 +63,19 @@ public class ShaderPack {
 		this.idMap = new IdMap(root);
 		this.langMap = parseLangEntries(root);
 		if (shaderProperties.asProperties().containsKey("texture.noise")) {
-			this.customNoiseTexturePath = root.resolve(shaderProperties.asProperties().getProperty("texture.noise"));
+			String noiseTextureLocation = shaderProperties.asProperties().getProperty("texture.noise");
+			Path tmpPath = Paths.get(noiseTextureLocation).normalize();
+			if (tmpPath.startsWith("/")) {
+				noiseTextureLocation = tmpPath.toString().substring(1);
+			}
+
+			Path noiseTexturePath = root.resolve(noiseTextureLocation);
+			if (Files.exists(noiseTexturePath)) {
+				this.customNoiseTexturePath = noiseTexturePath;
+			} else {
+				Iris.logger.warn("The current shaderpack defines the noise texture path as " + shaderProperties.asProperties().getProperty("texture.noise") + ", but no file exists at that path in the shaderpack!");
+				this.customNoiseTexturePath = null;
+			}
 		} else {
 			this.customNoiseTexturePath = null;
 		}
