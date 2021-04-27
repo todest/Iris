@@ -18,6 +18,7 @@ public class ShaderProperties {
 	Object2FloatMap<String> viewportScaleOverrides = new Object2FloatOpenHashMap<>();
 	Object2ObjectMap<String, AlphaTestOverride> alphaTestOverrides = new Object2ObjectOpenHashMap<>();
 	ObjectSet<String> blendDisabled = new ObjectOpenHashSet<>();
+	private String noiseTexture = null;
 
 	private final Properties properties;
 
@@ -29,6 +30,10 @@ public class ShaderProperties {
 		properties.forEach((keyObject, valueObject) -> {
 			String key = (String) keyObject;
 			String value = (String) valueObject;
+
+			if ("texture.noise".equals(key)) {
+				noiseTexture = value;
+			}
 
 			handlePassDirective("scale.", key, value, pass -> {
 				float scale;
@@ -92,6 +97,10 @@ public class ShaderProperties {
 			});
 		});
 		this.properties = ImmutableProperties.of(properties);
+	}
+
+	public Optional<String> getNoiseTexturePath() {
+		return Optional.ofNullable(noiseTexture);
 	}
 
 	private static void handlePassDirective(String prefix, String key, String value, Consumer<String> handler) {
