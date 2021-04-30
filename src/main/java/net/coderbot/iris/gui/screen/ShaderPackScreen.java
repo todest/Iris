@@ -57,11 +57,12 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		GuiUtil.drawDirtTexture(client, 0, 0, -100, width, 32);
 		GuiUtil.drawDirtTexture(client, 0, this.height - 58, -100, width, 58);
 		drawCenteredText(matrices, this.textRenderer, this.title, this.width / 2, 8, 16777215);
-		drawCenteredText(matrices, this.textRenderer, new TranslatableText("pack.iris.select.title").formatted(Formatting.GRAY, Formatting.ITALIC), (int)(this.width * 0.25), 21, 16777215);
-		drawCenteredText(matrices, this.textRenderer, new TranslatableText("pack.iris.configure.title").formatted(Formatting.GRAY, Formatting.ITALIC), (int)(this.width * 0.75), 21, 16777215);
 
 		if (addedPackDialog != null && addedPackDialogTimer > 0) {
 			drawCenteredText(matrices, this.textRenderer, addedPackDialog, (int) (this.width * 0.5), 21, 0xFFFFFF);
+		} else {
+			drawCenteredText(matrices, this.textRenderer, new TranslatableText("pack.iris.select.title").formatted(Formatting.GRAY, Formatting.ITALIC), (int)(this.width * 0.25), 21, 16777215);
+			drawCenteredText(matrices, this.textRenderer, new TranslatableText("pack.iris.configure.title").formatted(Formatting.GRAY, Formatting.ITALIC), (int)(this.width * 0.75), 21, 16777215);
 		}
 
 		super.render(matrices, mouseX, mouseY, delta);
