@@ -130,7 +130,9 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
             if (s.startsWith("screen.") || s.equals("screen")) {
                 PropertyList page = new PropertyList();
                 boolean subScreen = s.startsWith("screen.");
-                page.add(new TitleProperty(GuiUtil.trimmed(tr, subScreen ? s : shaderName, width - 60, subScreen, true, Formatting.BOLD), 0xAAFFFFFF));
+				boolean screenHasTranslation = subScreen & I18n.hasTranslation(s);
+				String untranslatedScreenName = subScreen ? s.substring(7) : s.substring(6);
+                page.add(new TitleProperty(GuiUtil.trimmed(tr, subScreen ? (screenHasTranslation ? s : untranslatedScreenName) : shaderName, width - 60, screenHasTranslation, true, Formatting.BOLD), 0xAAFFFFFF));
                 String[] screenOptions = shaderProperties.getProperty(s).split(" ");
                 for (String p : screenOptions) {
                     if (p.equals("<profile>")) {
