@@ -116,7 +116,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 			try {
 				Files.copy(pack, Iris.SHADERPACK_DIR.resolve(fileName));
 			} catch (IOException e) {
-				e.printStackTrace();
+				Iris.logger.warn("Error copying dragged shader pack", e);
 				this.addedPackDialog = new TranslatableText(
 						"options.iris.shaderPackSelection.copyError",
 						fileName
@@ -172,7 +172,8 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		try {
 			Iris.reload();
 		} catch (IOException e) {
-			Iris.logger.error("Error while switching Shaders for Iris!", e);
+			Iris.logger.error("Error reloading shader pack while applying changes!");
+			Iris.logger.catching(e);
 
 			if (this.client.player != null) {
 				this.client.player.sendMessage(new TranslatableText("iris.shaders.reloaded.failure", Throwables.getRootCause(e).getMessage()).formatted(Formatting.RED), false);

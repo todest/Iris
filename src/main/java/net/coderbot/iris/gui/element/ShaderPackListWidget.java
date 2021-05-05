@@ -61,7 +61,8 @@ public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPack
 
 			this.addEntry(new LabelEntry(PACK_LIST_LABEL));
 		} catch (Throwable e) {
-			e.printStackTrace();
+			Iris.logger.error("Error reading files while constructing selection UI");
+			Iris.logger.catching(e);
 		}
 	}
 
