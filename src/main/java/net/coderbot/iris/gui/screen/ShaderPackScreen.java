@@ -24,6 +24,7 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Util;
 
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -32,14 +33,17 @@ import java.util.stream.Collectors;
 public class ShaderPackScreen extends Screen implements HudHideable {
 	private final Screen parent;
 
-	private ShaderPackListWidget shaderPacks;
+	private ShaderPackListWidget shaderPackList;
 	private PropertyDocumentWidget shaderProperties;
 
 	private Text addedPackDialog = null;
 	private int addedPackDialogTimer = 0;
 
+	private boolean dropChanges = false;
+
 	public ShaderPackScreen(Screen parent) {
 		super(new TranslatableText("options.iris.shaderPackSelection.title"));
+
 		this.parent = parent;
 	}
 
@@ -51,7 +55,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 			this.fillGradient(matrices, 0, 0, width, height, 0x4F232323, 0x4F232323);
 		}
 
-		this.shaderPacks.render(matrices, mouseX, mouseY, delta);
+		this.shaderPackList.render(matrices, mouseX, mouseY, delta);
 		this.shaderProperties.render(matrices, mouseX, mouseY, delta);
 
 		GuiUtil.drawDirtTexture(client, 0, 0, -100, width, 32);
@@ -75,22 +79,31 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		int topCenter = this.width / 2 - 76;
 		boolean inWorld = this.client.world != null;
 
-		this.shaderPacks = new ShaderPackListWidget(this.client, this.width / 2, this.height, 32, this.height - 58, 0, this.width / 2);
+		this.shaderPackList = new ShaderPackListWidget(this.client, this.width / 2, this.height, 32, this.height - 58, 0, this.width / 2);
+
 		if (inWorld) {
-			this.shaderPacks.method_31322(false);
+			this.shaderPackList.method_31322(false);
 		}
-		this.children.add(shaderPacks);
+
+		this.children.add(shaderPackList);
 
 		this.refreshShaderPropertiesWidget();
 
-		this.addButton(new ButtonWidget(bottomCenter + 104, this.height - 27, 100, 20, ScreenTexts.DONE, button -> {
-			applyChanges();
-			onClose();
-		}));
-		this.addButton(new ButtonWidget(bottomCenter, this.height - 27, 100, 20, new TranslatableText("options.iris.apply"), button -> this.applyChanges()));
-		this.addButton(new ButtonWidget(bottomCenter - 104, this.height - 27, 100, 20, ScreenTexts.CANCEL, button -> this.onClose()));
-		this.addButton(new ButtonWidget(topCenter - 78, this.height - 51, 152, 20, new TranslatableText("options.iris.openShaderPackFolder"), button -> Util.getOperatingSystem().open(Iris.SHADERPACK_DIR.toFile())));
-		this.addButton(new ButtonWidget(topCenter + 78, this.height - 51, 152, 20, new TranslatableText("options.iris.refreshShaderPacks"), button -> this.shaderPacks.refresh()));
+		this.addButton(new ButtonWidget(bottomCenter + 104, this.height - 27, 100, 20,
+			ScreenTexts.DONE, button -> onClose()));
+
+		this.addButton(new ButtonWidget(bottomCenter, this.height - 27, 100, 20,
+			new TranslatableText("options.iris.apply"), button -> this.applyChanges()));
+
+		this.addButton(new ButtonWidget(bottomCenter - 104, this.height - 27, 100, 20,
+			ScreenTexts.CANCEL, button -> this.dropChangesAndClose()));
+
+		this.addButton(new ButtonWidget(topCenter - 78, this.height - 51, 152, 20,
+			new TranslatableText("options.iris.openShaderPackFolder"), button -> openShaderPackFolder()));
+
+		this.addButton(new ButtonWidget(topCenter + 78, this.height - 51, 152, 20,
+			new TranslatableText("options.iris.refreshShaderPacks"), button -> this.shaderPackList.refresh()));
+
 		this.addButton(new IrisConfigScreenButtonWidget(this.width - 26, 6, button -> client.openScreen(new IrisConfigScreen(this))));
 
 		if (parent != null) {
@@ -103,6 +116,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		for (Element e : this.children) {
 			if (e instanceof TickableElement) ((TickableElement)e).tick();
 		}
+		
 		if (this.addedPackDialogTimer > 0) {
 			this.addedPackDialogTimer--;
 		}
@@ -111,55 +125,108 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 	@Override
 	public void filesDragged(List<Path> paths) {
 		List<Path> packs = paths.stream().filter(Iris::isValidShaderpack).collect(Collectors.toList());
+
 		for (Path pack : packs) {
 			String fileName = pack.getFileName().toString();
+
 			try {
 				Files.copy(pack, Iris.SHADERPACK_DIR.resolve(fileName));
+			} catch (FileAlreadyExistsException e) {
+				this.addedPackDialog = new TranslatableText(
+						"options.iris.shaderPackSelection.copyErrorAlreadyExists",
+						fileName
+				).formatted(Formatting.ITALIC, Formatting.RED);
+
+				this.addedPackDialogTimer = 100;
+				this.shaderPackList.refresh();
+
+				return;
 			} catch (IOException e) {
 				Iris.logger.warn("Error copying dragged shader pack", e);
+
 				this.addedPackDialog = new TranslatableText(
 						"options.iris.shaderPackSelection.copyError",
 						fileName
 				).formatted(Formatting.ITALIC, Formatting.RED);
+
 				this.addedPackDialogTimer = 100;
-				this.shaderPacks.refresh();
+				this.shaderPackList.refresh();
+
 				return;
 			}
 		}
-		this.shaderPacks.refresh();
-		if (packs.size() > 0) {
-			if (packs.size() == 1) {
-				String packName = packs.get(0).getFileName().toString();
+
+		// After copying the relevant files over to the folder, make sure to refresh the shader pack list.
+		this.shaderPackList.refresh();
+
+		if (packs.size() == 0) {
+			// If zero packs were added, then notify the user that the files that they added weren't actually shader
+			// packs.
+
+			if (paths.size() == 1) {
+				// If a single pack could not be added, provide a message with that pack in the file name
+				String fileName = paths.get(0).getFileName().toString();
+
 				this.addedPackDialog = new TranslatableText(
-						"options.iris.shaderPackSelection.addedPack",
-						packName
-				).formatted(Formatting.ITALIC, Formatting.YELLOW);
-				this.shaderPacks.select(packName);
+					"options.iris.shaderPackSelection.failedAddSingle",
+					fileName
+				).formatted(Formatting.ITALIC, Formatting.RED);
 			} else {
+				// Otherwise, show a generic message.
+
 				this.addedPackDialog = new TranslatableText(
-						"options.iris.shaderPackSelection.addedPacks",
-						packs.size()
-				).formatted(Formatting.ITALIC, Formatting.YELLOW);
-			}
-		} else {
-			this.addedPackDialog = new TranslatableText(
 					"options.iris.shaderPackSelection.failedAdd"
-			).formatted(Formatting.ITALIC, Formatting.RED);
+				).formatted(Formatting.ITALIC, Formatting.RED);
+			}
+
+		} else if (packs.size() == 1) {
+			// In most cases, users will drag a single pack into the selection menu. So, let's special case it.
+			String packName = packs.get(0).getFileName().toString();
+
+			this.addedPackDialog = new TranslatableText(
+					"options.iris.shaderPackSelection.addedPack",
+					packName
+			).formatted(Formatting.ITALIC, Formatting.YELLOW);
+
+			// Select the pack that the user just added, since if a user just dragged a pack in, they'll probably want
+			// to actually use that pack afterwards.
+			this.shaderPackList.select(packName);
+		} else {
+			// We also support multiple packs being dragged and dropped at a time. Just show a generic success message
+			// in that case.
+			this.addedPackDialog = new TranslatableText(
+					"options.iris.shaderPackSelection.addedPacks",
+					packs.size()
+			).formatted(Formatting.ITALIC, Formatting.YELLOW);
 		}
+
+		// Show the relevant message for 5 seconds (100 ticks)
 		this.addedPackDialogTimer = 100;
 	}
 
 	@Override
 	public void onClose() {
+		if (!dropChanges) {
+			// TODO: Don't apply changes unnecessarily
+			applyChanges();
+		}
+
 		ScreenStack.pull(this.getClass());
 		client.openScreen(ScreenStack.pop());
 	}
 
+	private void dropChangesAndClose() {
+		dropChanges = true;
+		onClose();
+	}
+
 	private void applyChanges() {
-		ShaderPackListWidget.BaseEntry base = this.shaderPacks.getSelected();
+		ShaderPackListWidget.BaseEntry base = this.shaderPackList.getSelected();
+
 		if (!(base instanceof ShaderPackListWidget.ShaderPackEntry)) {
 			return;
 		}
+
 		ShaderPackListWidget.ShaderPackEntry entry = (ShaderPackListWidget.ShaderPackEntry)base;
 		String name = entry.getPackName();
 		if (name.equals("(off)")) {
@@ -168,7 +235,9 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 			Iris.getIrisConfig().setShadersEnabled();
 			Iris.getIrisConfig().setShaderPackName(name);
 		}
+
 		this.shaderProperties.saveProperties();
+
 		try {
 			Iris.reload();
 		} catch (IOException e) {
@@ -181,7 +250,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 
 			Iris.getIrisConfig().setShadersDisabled();
 			// Set the selected shaderpack to off in the gui
-			this.shaderPacks.select(0);
+			this.shaderPackList.select(0);
 		}
 		this.reloadShaderConfig();
 	}
@@ -286,5 +355,9 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 				renderTooltip(matrices, new TranslatableText("tooltip.iris.config"), mouseX, mouseY);
 			}
 		}
+	}
+
+	private void openShaderPackFolder() {
+		Util.getOperatingSystem().open(Iris.SHADERPACK_DIR.toFile());
 	}
 }
