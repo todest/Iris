@@ -264,11 +264,11 @@ public class IrisConfig {
 				0x82ffffff, 0x82ff0000, 0x82ff8800, 0x82ffd800, 0x8288ff00, 0x8200d8ff, 0x823048ff, 0x829900ff, 0x82ffffff
 		));
 		page.add(new FunctionalButtonProperty(widget, () -> MinecraftClient.getInstance().openScreen(new ShaderPackScreen(parent)), new TranslatableText("options.iris.shaderPackSelection.title"), LinkProperty.Align.CENTER_LEFT));
-		int optionTextWidthHalf = (int)((width * 0.5) * 0.6) - 21;
-		page.addAllPairs(ImmutableList.of(
-				new StringOptionProperty(ImmutableList.of(UiTheme.IRIS.name(), UiTheme.VANILLA.name(), UiTheme.AQUA.name()), 0, widget, "uiTheme", GuiUtil.trimmed(tr, "property.iris.uiTheme", optionTextWidthHalf, true, true), false, false),
-				new BooleanOptionProperty(widget, false, "condenseShaderConfig", GuiUtil.trimmed(tr, "property.iris.condenseShaderConfig", optionTextWidthHalf, true, true), false),
-				new BooleanOptionProperty(widget, false, "applyChangesOnEsc", GuiUtil.trimmed(tr, "property.iris.applyChangesOnEsc", optionTextWidthHalf, true, true), false)
+		int textWidth = (int)(width * 0.6) - 18;
+		page.addAll(ImmutableList.of(
+				new StringOptionProperty(ImmutableList.of(UiTheme.IRIS.name(), UiTheme.VANILLA.name(), UiTheme.AQUA.name()), 0, widget, "uiTheme", GuiUtil.trimmed(tr, "property.iris.uiTheme", textWidth, true, true), false, false),
+				new BooleanOptionProperty(widget, true, "condenseShaderConfig", GuiUtil.trimmed(tr, "property.iris.condenseShaderConfig", textWidth, true, true), false),
+				new BooleanOptionProperty(widget, false, "applyChangesOnEsc", GuiUtil.trimmed(tr, "property.iris.applyChangesOnEsc", textWidth, true, true), false)
 		));
 		document.put("main", page);
 		widget.onSave(() -> {
