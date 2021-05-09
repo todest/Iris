@@ -206,7 +206,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 
 	@Override
 	public void onClose() {
-		if (!dropChanges) {
+		if (Iris.getIrisConfig().shouldApplyChangesOnEsc() && !dropChanges) {
 			// TODO: Don't apply changes unnecessarily
 			applyChanges();
 		}
