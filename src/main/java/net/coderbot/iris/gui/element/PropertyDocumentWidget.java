@@ -38,7 +38,7 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
 
     @Override
     public int getRowWidth() {
-        return resizedRows ? rowWidth : super.getRowWidth();
+        return resizedRows ? rowWidth : width;
     }
 
     public void addPage(String page, PropertyList properties) {

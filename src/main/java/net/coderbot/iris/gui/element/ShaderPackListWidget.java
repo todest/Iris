@@ -4,14 +4,15 @@ import com.google.common.collect.ImmutableList;
 import net.coderbot.iris.Iris;
 import net.coderbot.iris.gui.GuiUtil;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextHandler;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.font.TextVisitFactory;
 import net.minecraft.client.gui.widget.AlwaysSelectedEntryListWidget;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
+import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.math.MathHelper;
+import org.apache.commons.lang3.mutable.MutableFloat;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,10 +32,7 @@ public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPack
 
 	@Override
 	public int getRowWidth() {
-		// Allow the list widget to expand to take up most of the width of the screen, or shrink as needed.
-		// This is important both because shader pack names can be quite long, and it also helps if this list widget
-		// is side-by-side with another widget, such as a config GUI.
-		return width - 50;
+		return width - 12;
 	}
 
 	@Override
@@ -135,6 +133,8 @@ public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPack
 			int color = 0xFFFFFF;
 			String name = packName;
 
+			// For some reason, the method that getWidth uses ignores the style passed to it and uses the empty style
+			// TODO: Find a workaround for this
 			if (textRenderer.getWidth(new LiteralText(name).formatted(Formatting.BOLD)) > this.list.getRowWidth() - 3) {
 				name = textRenderer.trimToWidth(name, this.list.getRowWidth() - 8) + "...";
 			}
