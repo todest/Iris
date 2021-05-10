@@ -16,6 +16,8 @@ import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<PropertyDocumentWidget.PropertyEntry> {
     protected Map<String, PropertyList> document = new HashMap<>();
@@ -23,7 +25,9 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
     protected int rowWidth = 0;
     protected boolean resizedRows = false;
 
-    protected Runnable save = () -> {};
+    protected Supplier<Boolean> save = () -> {
+		return null;
+	};
     protected Runnable load = () -> {};
 
     public PropertyDocumentWidget(MinecraftClient client, int width, int height, int top, int bottom, int left, int right, int itemHeight) {
@@ -63,15 +67,16 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
         return document.getOrDefault(name, new PropertyList(new TitleProperty(new TranslatableText("page.iris.notFound").formatted(Formatting.DARK_RED))));
     }
 
-    public void saveProperties() {
-        save.run();
+    // Returns a boolean of whether any properties changed or not
+    public boolean saveProperties() {
+        return save.get();
     }
 
     public void loadProperties() {
         load.run();
     }
 
-    public void onSave(Runnable procedure) {
+    public void onSave(Supplier<Boolean> procedure) {
         this.save = procedure;
     }
 

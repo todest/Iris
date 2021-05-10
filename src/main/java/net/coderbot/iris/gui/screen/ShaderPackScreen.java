@@ -2,6 +2,7 @@ package net.coderbot.iris.gui.screen;
 
 import com.google.common.base.Throwables;
 import net.coderbot.iris.Iris;
+import net.coderbot.iris.config.IrisConfig;
 import net.coderbot.iris.gui.GuiUtil;
 import net.coderbot.iris.gui.ScreenStack;
 import net.coderbot.iris.gui.element.PropertyDocumentWidget;
@@ -28,6 +29,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class ShaderPackScreen extends Screen implements HudHideable {
@@ -206,8 +208,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 
 	@Override
 	public void onClose() {
-		if (Iris.getIrisConfig().shouldApplyChangesOnEsc() && !dropChanges) {
-			// TODO: Don't apply changes unnecessarily
+		if (!dropChanges) {
 			applyChanges();
 		}
 
@@ -228,15 +229,20 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		}
 
 		ShaderPackListWidget.ShaderPackEntry entry = (ShaderPackListWidget.ShaderPackEntry)base;
+		IrisConfig config = Iris.getIrisConfig();
+
 		String name = entry.getPackName();
 		if (name.equals("(off)")) {
-			Iris.getIrisConfig().setShadersDisabled();
-		} else {
-			Iris.getIrisConfig().setShadersEnabled();
-			Iris.getIrisConfig().setShaderPackName(name);
-		}
+			if (!config.areShadersEnabled()) return;
 
-		this.shaderProperties.saveProperties();
+			config.setShadersDisabled();
+		} else {
+			boolean changed = this.shaderProperties.saveProperties();
+			if (config.areShadersEnabled() && name.equals(config.getShaderPackName()) && !changed) return;
+
+			config.setShadersEnabled();
+			config.setShaderPackName(name);
+		}
 
 		try {
 			Iris.reload();
@@ -270,8 +276,10 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		shaderProperties.onSave(() -> {
 			ShaderPack shaderPack = Iris.getCurrentPack().orElse(null);
 			if (shaderPack == null) {
-				return;
+				return false;
 			}
+
+			AtomicBoolean propertiesChanged = new AtomicBoolean(false);
 
 			ShaderPackConfig config = shaderPack.getConfig();
 			for (String pageName : shaderProperties.getPages()) {
@@ -279,7 +287,11 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 				propertyList.forEvery(property -> {
 					if (property instanceof OptionProperty) {
 						String key = ((OptionProperty<?>)property).getKey();
-						config.getConfigProperties().setProperty(key, ((OptionProperty<?>)property).getValue().toString());
+						if (!((OptionProperty<?>) property).getValue().toString().equals(config.getConfigProperties().getProperty(key))) {
+							System.out.println("changed");
+							propertiesChanged.set(true);
+							config.getConfigProperties().setProperty(key, ((OptionProperty<?>)property).getValue().toString());
+						}
 					}
 				});
 			}
@@ -289,6 +301,8 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+
+			return propertiesChanged.get();
 		});
 		shaderProperties.onLoad(() -> {
 			ShaderPack shaderPack = Iris.getCurrentPack().orElse(null);

@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A class dedicated to storing the config values of shaderpacks.
@@ -48,11 +49,6 @@ public class IrisConfig {
 	 * Whether to display shader pack config screens in "condensed" view. Defaults to true.
 	 */
 	private boolean condenseShaderConfig = true;
-
-	/*
-	 * Whether to automatically save changes and reload when the the esc key is pressed in the shaderpack gui. Defaults to false for now.
-	 */
-	private boolean applyChangesOnEsc = false;
 
 	private Path propertiesPath;
 
@@ -184,14 +180,6 @@ public class IrisConfig {
 		}
 	}
 
-	public boolean shouldApplyChangesOnEsc() {
-		return applyChangesOnEsc;
-	}
-
-	public void setApplyChangesOnEsc(boolean applyChangesOnEsc) {
-		this.applyChangesOnEsc = applyChangesOnEsc;
-	}
-
 	/**
 	 * Sets config values as read from a Properties object.
 	 *
@@ -202,7 +190,6 @@ public class IrisConfig {
 		enableShaders = Boolean.parseBoolean(properties.getProperty("enableShaders", String.valueOf(this.enableShaders)));
 		uiTheme = properties.getProperty("uiTheme", this.uiTheme);
 		condenseShaderConfig = Boolean.parseBoolean(properties.getProperty("condenseShaderConfig", String.valueOf(this.condenseShaderConfig)));
-		applyChangesOnEsc = Boolean.parseBoolean(properties.getProperty("applyChangesOnEsc", String.valueOf(this.applyChangesOnEsc)));
 
 		if (shaderPackName == null) {
 			shaderPackName = "";
@@ -221,7 +208,6 @@ public class IrisConfig {
 		properties.setProperty("enableShaders", Boolean.toString(areShadersEnabled()));
 		properties.setProperty("uiTheme", getUITheme().name());
 		properties.setProperty("condenseShaderConfig", Boolean.toString(getIfCondensedShaderConfig()));
-		properties.setProperty("applyChangesOnEsc", Boolean.toString(shouldApplyChangesOnEsc()));
 
 		return properties;
 	}
@@ -267,8 +253,7 @@ public class IrisConfig {
 		int textWidth = (int)(width * 0.6) - 18;
 		page.addAll(ImmutableList.of(
 				new StringOptionProperty(ImmutableList.of(UiTheme.IRIS.name(), UiTheme.VANILLA.name(), UiTheme.AQUA.name()), 0, widget, "uiTheme", GuiUtil.trimmed(tr, "property.iris.uiTheme", textWidth, true, true), false, false),
-				new BooleanOptionProperty(widget, true, "condenseShaderConfig", GuiUtil.trimmed(tr, "property.iris.condenseShaderConfig", textWidth, true, true), false),
-				new BooleanOptionProperty(widget, false, "applyChangesOnEsc", GuiUtil.trimmed(tr, "property.iris.applyChangesOnEsc", textWidth, true, true), false)
+				new BooleanOptionProperty(widget, true, "condenseShaderConfig", GuiUtil.trimmed(tr, "property.iris.condenseShaderConfig", textWidth, true, true), false)
 		));
 		document.put("main", page);
 		widget.onSave(() -> {
@@ -286,6 +271,7 @@ public class IrisConfig {
 				Iris.logger.error("Failed to save config!");
 				e.printStackTrace();
 			}
+			return true;
 		});
 		widget.onLoad(() -> {
 			try {
