@@ -199,10 +199,10 @@ public class IrisConfig {
 	 */
 	public void read(Properties properties) {
 		shaderPackName = properties.getProperty("shaderPack", this.shaderPackName);
-		enableShaders = Boolean.parseBoolean(properties.getProperty("enableShaders"));
+		enableShaders = Boolean.parseBoolean(properties.getProperty("enableShaders", String.valueOf(this.enableShaders)));
 		uiTheme = properties.getProperty("uiTheme", this.uiTheme);
-		condenseShaderConfig = Boolean.parseBoolean(properties.getProperty("condenseShaderConfig"));
-		applyChangesOnEsc = Boolean.parseBoolean(properties.getProperty("applyChangesOnEsc"));
+		condenseShaderConfig = Boolean.parseBoolean(properties.getProperty("condenseShaderConfig", String.valueOf(this.condenseShaderConfig)));
+		applyChangesOnEsc = Boolean.parseBoolean(properties.getProperty("applyChangesOnEsc", String.valueOf(this.applyChangesOnEsc)));
 
 		if (shaderPackName == null) {
 			shaderPackName = "";
