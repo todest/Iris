@@ -288,7 +288,6 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 					if (property instanceof OptionProperty) {
 						String key = ((OptionProperty<?>)property).getKey();
 						if (!((OptionProperty<?>) property).getValue().toString().equals(config.getConfigProperties().getProperty(key))) {
-							System.out.println("changed");
 							propertiesChanged.set(true);
 							config.getConfigProperties().setProperty(key, ((OptionProperty<?>)property).getValue().toString());
 						}
