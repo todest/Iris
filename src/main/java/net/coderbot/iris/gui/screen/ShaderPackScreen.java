@@ -132,7 +132,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 			String fileName = pack.getFileName().toString();
 
 			try {
-				Files.copy(pack, Iris.SHADERPACK_DIR.resolve(fileName));
+				Files.copy(pack, Iris.SHADERPACKS_DIRECTORY.resolve(fileName));
 			} catch (FileAlreadyExistsException e) {
 				this.addedPackDialog = new TranslatableText(
 						"options.iris.shaderPackSelection.copyErrorAlreadyExists",
@@ -372,6 +372,6 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 	}
 
 	private void openShaderPackFolder() {
-		Util.getOperatingSystem().open(Iris.SHADERPACK_DIR.toFile());
+		Util.getOperatingSystem().open(Iris.SHADERPACKS_DIRECTORY.toFile());
 	}
 }
