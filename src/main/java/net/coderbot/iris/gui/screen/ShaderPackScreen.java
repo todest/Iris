@@ -347,7 +347,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 	private void reloadShaderConfig() {
 		ShaderPack shaderPack = Iris.getCurrentPack().orElse(null);
 		if (shaderPack == null) {
-			this.shaderProperties.setDocument(PropertyDocumentWidget.createShaderpackConfigDocument(this.client.textRenderer, this.width / 2, Iris.getIrisConfig().getShaderPackName(), null, this.shaderProperties), "screen");
+			this.shaderProperties.setDocument(PropertyDocumentWidget.createShaderpackConfigDocument(this.client.textRenderer, this.width / 2, "Shaders Disabled", null, this.shaderProperties), "screen");
 			shaderProperties.loadProperties();
 			return;
 		}

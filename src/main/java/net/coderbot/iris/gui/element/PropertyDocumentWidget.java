@@ -106,7 +106,7 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
 
 		if (pack == null) {
 			document.put("screen", new PropertyList(
-					new TitleProperty(new LiteralText(shaderName).formatted(Formatting.BOLD), 0xAAFFFFFF),
+					new TitleProperty(GuiUtil.trimmed(tr, shaderName, bw, false, true, Formatting.BOLD), 0xAAFFFFFF),
 					new Property(GuiUtil.trimmed(tr, "page.iris.noShaders", bw, true, true, Formatting.ITALIC))
 			));
 			return document;
