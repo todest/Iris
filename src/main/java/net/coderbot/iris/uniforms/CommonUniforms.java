@@ -83,6 +83,10 @@ public final class CommonUniforms {
 	}
 
 	private static Vec3d getFogColor() {
+		if (client.world == null || fogColor == null) {
+			return Vec3d.ZERO;
+		}
+
 		return fogColor;
 	}
 
