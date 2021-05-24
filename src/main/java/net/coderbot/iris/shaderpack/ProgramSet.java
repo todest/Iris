@@ -47,7 +47,8 @@ public class ProgramSet {
 	private final ShaderPack pack;
 
 	public ProgramSet(Path root, Path inclusionRoot, ShaderPack pack) throws IOException {
-		this.packDirectives = new PackDirectives();
+		// TODO: Support additional render targets beyond 8
+		this.packDirectives = new PackDirectives(PackRenderTargetDirectives.BASELINE_SUPPORTED_RENDER_TARGETS);
 		this.pack = pack;
 
 		this.shadow = readProgramSource(root, inclusionRoot, "shadow", this, pack);
@@ -102,7 +103,8 @@ public class ProgramSet {
 			throw new IllegalStateException();
 		}
 
-		this.packDirectives = new PackDirectives();
+		// TODO: Support additional render targets beyond 8
+		this.packDirectives = new PackDirectives(PackRenderTargetDirectives.BASELINE_SUPPORTED_RENDER_TARGETS);
 
 		this.shadow = merge(base.shadow, overrides.shadow);
 
@@ -187,15 +189,20 @@ public class ProgramSet {
 		programs.addAll(Arrays.asList(composite));
 		programs.add(compositeFinal);
 
+		DispatchingDirectiveHolder packDirectiveHolder = new DispatchingDirectiveHolder();
+
+		packDirectives.acceptDirectivesFrom(packDirectiveHolder);
+
 		for (ProgramSource source : programs) {
 			if (source == null) {
 				continue;
 			}
 
-			source
-				.getFragmentSource()
-				.map(ConstDirectiveParser::findDirectives)
-				.ifPresent(lines -> lines.forEach(packDirectives::accept));
+			source.getFragmentSource().map(ConstDirectiveParser::findDirectives).ifPresent(directives -> {
+				for (ConstDirectiveParser.ConstDirective directive : directives) {
+					packDirectiveHolder.processDirective(directive);
+				}
+			});
 		}
 	}
 
