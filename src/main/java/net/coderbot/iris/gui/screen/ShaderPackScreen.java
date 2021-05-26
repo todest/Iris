@@ -262,7 +262,6 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		ShaderPackListWidget.BaseEntry base = this.shaderPackList.getSelected();
 
 		if (!(base instanceof ShaderPackListWidget.ShaderPackEntry)) {
-			System.out.println("here");
 			return;
 		}
 
@@ -271,7 +270,6 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 
 		String name = entry.getPackName();
 		boolean changed = this.shaderProperties.saveProperties();
-		System.out.println(config.areShadersEnabled() == this.shaderPackList.getEnableShadersButton().enabled);
 		if (config.areShadersEnabled() == this.shaderPackList.getEnableShadersButton().enabled && name.equals(config.getShaderPackName()) && !changed) return;
 
 		config.setShaderPackName(name);
