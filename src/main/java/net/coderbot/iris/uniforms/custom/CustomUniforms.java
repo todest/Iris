@@ -15,6 +15,7 @@ import net.coderbot.iris.gl.uniform.UniformHolder;
 import net.coderbot.iris.gl.uniform.UniformType;
 import net.coderbot.iris.parsing.IrisFunctions;
 import net.coderbot.iris.parsing.IrisOptions;
+import net.coderbot.iris.parsing.MatrixType;
 import net.coderbot.iris.parsing.VectorType;
 import net.coderbot.iris.uniforms.custom.cached.*;
 import net.coderbot.iris.vendored.joml.Vector2f;
@@ -301,10 +302,14 @@ public class CustomUniforms implements FunctionContext {
 			return UniformType.FLOAT;
 		} else if (type.equals(VectorType.VEC2)) {
 			return UniformType.VEC2;
+		} else if (type.equals(VectorType.I_VEC2)) {
+			return UniformType.VEC2I;
 		} else if (type.equals(VectorType.VEC3)) {
 			return UniformType.VEC3;
 		} else if (type.equals(VectorType.VEC4)) {
 			return UniformType.VEC4;
+		} else if (type.equals(MatrixType.MAT4)) {
+			return UniformType.MAT4;
 		} else {
 			Iris.logger.warn("Could not get UniformType for Type: " + type);
 			return null;
