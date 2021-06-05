@@ -55,6 +55,8 @@ public class CompositeRenderer {
 				renderTargetDirectives.getRenderTargetSettings();
 		final List<Pair<Program, ProgramDirectives>> programs = new ArrayList<>();
 
+		// TODO: The final pass should be separate from composite passes.
+
 		for (ProgramSource source : pack.getComposite()) {
 			if (source == null || !source.isValid()) {
 				continue;
@@ -101,8 +103,11 @@ public class CompositeRenderer {
 			passes.add(pass);
 
 			// Flip the buffers that this shader wrote to
-			for (int buffer : drawBuffers) {
-				stageReadsFromAlt[buffer] = !stageReadsFromAlt[buffer];
+			// The final pass does not write to our render targets, so it doesn't flip buffers.
+			if (!pass.isLastPass) {
+				for (int buffer : drawBuffers) {
+					stageReadsFromAlt[buffer] = !stageReadsFromAlt[buffer];
+				}
 			}
 		}
 
@@ -239,6 +244,7 @@ public class CompositeRenderer {
 		main.beginWrite(true);
 		GlStateManager.useProgram(0);
 
+		// NB: Unbinding all of these textures is necessary for proper shaderpack reloading.
 		resetRenderTarget(SamplerUniforms.COLOR_TEX_0, renderTargets.get(0));
 		resetRenderTarget(SamplerUniforms.COLOR_TEX_1, renderTargets.get(1));
 		resetRenderTarget(SamplerUniforms.COLOR_TEX_2, renderTargets.get(2));
@@ -248,11 +254,27 @@ public class CompositeRenderer {
 		resetRenderTarget(SamplerUniforms.COLOR_TEX_6, renderTargets.get(6));
 		resetRenderTarget(SamplerUniforms.COLOR_TEX_7, renderTargets.get(7));
 
-		// TODO: We unbind these textures but it would probably make sense to unbind the other ones too.
-		RenderSystem.activeTexture(GL15C.GL_TEXTURE0 + SamplerUniforms.DEFAULT_DEPTH);
+		RenderSystem.activeTexture(GL15C.GL_TEXTURE0 + SamplerUniforms.DEPTH_TEX_0);
 		RenderSystem.bindTexture(0);
-		RenderSystem.activeTexture(GL15C.GL_TEXTURE0 + SamplerUniforms.DEFAULT_COLOR);
+		RenderSystem.activeTexture(GL15C.GL_TEXTURE0 + SamplerUniforms.DEPTH_TEX_1);
 		RenderSystem.bindTexture(0);
+		RenderSystem.activeTexture(GL15C.GL_TEXTURE0 + SamplerUniforms.DEPTH_TEX_2);
+		RenderSystem.bindTexture(0);
+
+		RenderSystem.activeTexture(GL15C.GL_TEXTURE0 + SamplerUniforms.SHADOW_TEX_0);
+		RenderSystem.bindTexture(0);
+		RenderSystem.activeTexture(GL15C.GL_TEXTURE0 + SamplerUniforms.SHADOW_TEX_1);
+		RenderSystem.bindTexture(0);
+
+		RenderSystem.activeTexture(GL15C.GL_TEXTURE0 + SamplerUniforms.SHADOW_COLOR_0);
+		RenderSystem.bindTexture(0);
+		RenderSystem.activeTexture(GL15C.GL_TEXTURE0 + SamplerUniforms.SHADOW_COLOR_1);
+		RenderSystem.bindTexture(0);
+
+		RenderSystem.activeTexture(GL15C.GL_TEXTURE0 + SamplerUniforms.NOISE_TEX);
+		RenderSystem.bindTexture(0);
+
+		RenderSystem.activeTexture(GL15C.GL_TEXTURE0);
 	}
 
 	private static void bindRenderTarget(int textureUnit, RenderTarget target, boolean readFromAlt, boolean generateMipmap) {
