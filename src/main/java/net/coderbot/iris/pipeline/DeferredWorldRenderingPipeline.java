@@ -11,6 +11,7 @@ import net.coderbot.iris.gl.framebuffer.GlFramebuffer;
 import net.coderbot.iris.gl.program.Program;
 import net.coderbot.iris.gl.program.ProgramBuilder;
 import net.coderbot.iris.layer.GbufferProgram;
+import net.coderbot.iris.mixin.WorldRendererAccessor;
 import net.coderbot.iris.postprocess.CompositeRenderer;
 import net.coderbot.iris.rendertarget.NativeImageBackedCustomTexture;
 import net.coderbot.iris.rendertarget.NativeImageBackedNoiseTexture;
@@ -28,9 +29,11 @@ import net.minecraft.client.gl.GlProgramManager;
 import net.minecraft.client.particle.ParticleTextureSheet;
 import net.minecraft.util.Identifier;
 import net.coderbot.iris.rendertarget.*;
+import net.coderbot.iris.shadows.ShadowMapRenderer;
 import net.coderbot.iris.uniforms.CommonUniforms;
 import net.coderbot.iris.uniforms.FrameUpdateNotifier;
 import net.coderbot.iris.uniforms.SamplerUniforms;
+import net.minecraft.client.render.Camera;
 import net.minecraft.client.texture.AbstractTexture;
 import org.apache.logging.log4j.Level;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +43,7 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL20C;
 
 import net.minecraft.util.registry.Registry;
+import org.lwjgl.opengl.GL30C;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -88,7 +92,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 	private final GlFramebuffer clearMainBuffers;
 	private final GlFramebuffer baseline;
 
-	private final EmptyShadowMapRenderer shadowMapRenderer;
+	private final ShadowMapRenderer shadowMapRenderer;
 	private final CompositeRenderer compositeRenderer;
 	private final NativeImageBackedSingleColorTexture normals;
 	private final NativeImageBackedSingleColorTexture specular;
@@ -102,6 +106,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 
 	private static final Identifier WATER_IDENTIFIER = new Identifier("minecraft", "water");
 
+	private boolean usesShadows = false;
 	private final CustomUniforms customUniforms;
 
 	public DeferredWorldRenderingPipeline(ProgramSet programs) {
@@ -114,10 +119,10 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 				WorldTimeUniforms::addWorldTimeUniforms,
 				SystemTimeUniforms::addSystemTimeUniforms,
 				new CelestialUniforms(programs.getPackDirectives().getSunPathRotation())::addCelestialUniforms,
-				uniforms -> WeatherUniforms.addWeatherUniforms(uniforms, FrameUpdateNotifier.INSTANCE),
+				holder -> WeatherUniforms.addWeatherUniforms(holder, FrameUpdateNotifier.INSTANCE),
 				holder -> IdMapUniforms.addIdMapUniforms(holder, programs.getPack().getIdMap()),
-				MatrixUniforms::addMatrixUniforms,
-				uniforms -> CommonUniforms.generalCommonUniforms(uniforms, FrameUpdateNotifier.INSTANCE),
+				holder -> MatrixUniforms.addMatrixUniforms(holder, programs.getPackDirectives()),
+				holder -> CommonUniforms.generalCommonUniforms(holder, FrameUpdateNotifier.INSTANCE),
 				BiomeParameters::biomeParameters
 		);
 
@@ -172,10 +177,16 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 
 		GlStateManager.activeTexture(GL20C.GL_TEXTURE0);
 
-		this.shadowMapRenderer = new EmptyShadowMapRenderer(2048);
-		this.compositeRenderer = new CompositeRenderer(programs, renderTargets, shadowMapRenderer, noise);
+		this.compositeRenderer = new CompositeRenderer(programs, renderTargets, noise);
 
-		// first optimization pass
+		this.usesShadows |= compositeRenderer.usesShadows();
+
+		if (usesShadows) {
+			this.shadowMapRenderer = new ShadowRenderer(this, programs.getShadow().orElse(null), programs.getPackDirectives());
+		} else {
+			this.shadowMapRenderer = new EmptyShadowMapRenderer(programs.getPackDirectives().getShadowDirectives().getResolution());
+		}
+
 		this.customUniforms.optimise();
 	}
 
@@ -192,7 +203,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 	public void pushProgram(GbufferProgram program) {
 		checkWorld();
 
-		if (!isRenderingWorld) {
+		if (!isRenderingWorld || isRenderingShadow) {
 			// don't mess with non-world rendering
 			return;
 		}
@@ -206,7 +217,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 	public void popProgram(GbufferProgram expected) {
 		checkWorld();
 
-		if (!isRenderingWorld) {
+		if (!isRenderingWorld || isRenderingShadow) {
 			// don't mess with non-world rendering
 			return;
 		}
@@ -385,6 +396,10 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 			throw new RuntimeException("Shader compilation failed!", e);
 		}
 
+		if (SamplerUniforms.hasShadowSamplers(builder)) {
+			usesShadows = true;
+		}
+
 		SamplerUniforms.addCommonSamplerUniforms(builder);
 		SamplerUniforms.addWorldSamplerUniforms(builder);
 		SamplerUniforms.addDepthSamplerUniforms(builder);
@@ -437,7 +452,10 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 			GlStateManager.bindTexture(specular.getGlId());
 
 			bindTexture(SamplerUniforms.SHADOW_TEX_0, shadowMapRenderer.getDepthTextureId());
-			bindTexture(SamplerUniforms.SHADOW_TEX_1, shadowMapRenderer.getDepthTextureId());
+			bindTexture(SamplerUniforms.SHADOW_TEX_1, shadowMapRenderer.getDepthTextureNoTranslucentsId());
+			bindTexture(SamplerUniforms.SHADOW_COLOR_0, shadowMapRenderer.getColorTexture0Id());
+			bindTexture(SamplerUniforms.SHADOW_COLOR_1, shadowMapRenderer.getColorTexture1Id());
+
 			bindRenderTarget(SamplerUniforms.COLOR_TEX_4, renderTargets.get(4));
 			bindRenderTarget(SamplerUniforms.COLOR_TEX_5, renderTargets.get(5));
 			bindRenderTarget(SamplerUniforms.COLOR_TEX_6, renderTargets.get(6));
@@ -503,6 +521,13 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		//
 		// This destroys all of the loaded composite programs as well.
 		compositeRenderer.destroy();
+
+		// Make sure that any custom framebuffers are not bound before destroying render targets
+		GlStateManager.bindFramebuffer(GL30C.GL_READ_FRAMEBUFFER, 0);
+		GlStateManager.bindFramebuffer(GL30C.GL_DRAW_FRAMEBUFFER, 0);
+		GlStateManager.bindFramebuffer(GL30C.GL_FRAMEBUFFER, 0);
+
+		MinecraftClient.getInstance().getFramebuffer().beginWrite(false);
 
 		// Destroy our render targets
 		//
@@ -579,10 +604,10 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 	public void beginTranslucents() {
 		// We need to copy the current depth texture so that depthtex1 and depthtex2 can contain the depth values for
 		// all non-translucent content, as required.
-		baseline.bind();
+		baseline.bindAsReadBuffer();
 		GlStateManager.bindTexture(renderTargets.getDepthTextureNoTranslucents().getTextureId());
-		GL20C.glCopyTexImage2D(GL20C.GL_TEXTURE_2D, 0, GL20C.GL_DEPTH_COMPONENT, 0, 0, renderTargets.getCurrentWidth(),
-				renderTargets.getCurrentHeight(), 0);
+		GL20C.glCopyTexImage2D(GL20C.GL_TEXTURE_2D, 0, GL20C.GL_DEPTH_COMPONENT, 0, 0, renderTargets.getCurrentWidth(), renderTargets.getCurrentHeight(), 0);
+		GlStateManager.bindTexture(0);
 	}
 
 	public static GbufferProgram getProgramForSheet(ParticleTextureSheet sheet) {
@@ -597,6 +622,27 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 			// Yes, this seems backwards. However, in this case, these particles are always bright regardless of the
 			// lighting condition, and therefore don't use the textured_lit program.
 			return GbufferProgram.TEXTURED;
+		}
+	}
+
+	@Override
+	public void renderShadows(WorldRendererAccessor worldRenderer, Camera playerCamera) {
+		this.shadowMapRenderer.renderShadows(worldRenderer, playerCamera);
+	}
+
+	@Override
+	public void addDebugText(List<String> messages) {
+		if (shadowMapRenderer instanceof ShadowRenderer) {
+			messages.add("");
+			messages.add("[Iris] Shadow Maps: " + ShadowRenderer.OVERALL_DEBUG_STRING);
+			messages.add("[Iris] Shadow Terrain: " + ShadowRenderer.SHADOW_DEBUG_STRING);
+			messages.add("[Iris] Shadow Entities: " + ShadowRenderer.getEntitiesDebugString());
+			messages.add("[Iris] Shadow Block Entities: " + ShadowRenderer.getBlockEntitiesDebugString());
+		} else if (shadowMapRenderer instanceof EmptyShadowMapRenderer) {
+			messages.add("");
+			messages.add("[Iris] Shadow Maps: not used by shader pack");
+		} else {
+			throw new IllegalStateException("Unknown shadow map renderer type!");
 		}
 	}
 
@@ -652,6 +698,16 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		isRenderingWorld = false;
 		programStackLog.clear();
 
-		compositeRenderer.renderAll();
+		compositeRenderer.renderAll(shadowMapRenderer);
+	}
+
+	private boolean isRenderingShadow = false;
+
+	public void beginShadowRender() {
+		isRenderingShadow = true;
+	}
+
+	public void endShadowRender() {
+		isRenderingShadow = false;
 	}
 }
