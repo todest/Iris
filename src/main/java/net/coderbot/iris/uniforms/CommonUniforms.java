@@ -46,7 +46,7 @@ public final class CommonUniforms {
 		new CelestialUniforms(directives.getSunPathRotation()).addCelestialUniforms(uniforms);
 		WeatherUniforms.addWeatherUniforms(uniforms, updateNotifier);
 		IdMapUniforms.addIdMapUniforms(uniforms, idMap);
-		MatrixUniforms.addMatrixUniforms(uniforms);
+		MatrixUniforms.addMatrixUniforms(uniforms, directives);
 		SamplerUniforms.addCommonSamplerUniforms(uniforms);
 		HardcodedCustomUniforms.addHardcodedCustomUniforms(uniforms);
 

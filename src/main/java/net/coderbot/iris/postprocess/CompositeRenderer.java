@@ -23,18 +23,18 @@ import net.coderbot.iris.shaderpack.PackRenderTargetDirectives;
 import net.coderbot.iris.shaderpack.ProgramDirectives;
 import net.coderbot.iris.shaderpack.ProgramSet;
 import net.coderbot.iris.shaderpack.ProgramSource;
-import net.coderbot.iris.shadows.EmptyShadowMapRenderer;
+import net.coderbot.iris.shadows.ShadowMapRenderer;
 import net.coderbot.iris.uniforms.CommonUniforms;
 import net.coderbot.iris.uniforms.FrameUpdateNotifier;
 import net.coderbot.iris.uniforms.SamplerUniforms;
 import net.minecraft.client.texture.AbstractTexture;
 import org.lwjgl.opengl.GL15C;
+import org.lwjgl.opengl.GL20C;
+import org.lwjgl.opengl.GL30C;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.util.Pair;
-import org.lwjgl.opengl.GL20C;
-import org.lwjgl.opengl.GL30C;
 
 public class CompositeRenderer {
 	private final RenderTargets renderTargets;
@@ -42,12 +42,12 @@ public class CompositeRenderer {
 	private final ImmutableList<Pass> passes;
 	private final ImmutableList<SwapPass> swapPasses;
 	private final GlFramebuffer baseline;
-	private final EmptyShadowMapRenderer shadowMapRenderer;
 	private final AbstractTexture noiseTexture;
 
 	final CenterDepthSampler centerDepthSampler;
+	private boolean usesShadows = false;
 
-	public CompositeRenderer(ProgramSet pack, RenderTargets renderTargets, EmptyShadowMapRenderer shadowMapRenderer, AbstractTexture noiseTexture) {
+	public CompositeRenderer(ProgramSet pack, RenderTargets renderTargets, AbstractTexture noiseTexture) {
 		centerDepthSampler = new CenterDepthSampler(renderTargets, FrameUpdateNotifier.INSTANCE);
 
 		final PackRenderTargetDirectives renderTargetDirectives = pack.getPackDirectives().getRenderTargetDirectives();
@@ -143,7 +143,6 @@ public class CompositeRenderer {
 
 		GL30C.glBindFramebuffer(GL30C.GL_READ_FRAMEBUFFER, 0);
 
-		this.shadowMapRenderer = shadowMapRenderer;
 		this.noiseTexture = noiseTexture;
 	}
 
@@ -165,7 +164,7 @@ public class CompositeRenderer {
 		int targetTexture;
 	}
 
-	public void renderAll() {
+	public void renderAll(ShadowMapRenderer shadowMapRenderer) {
 		centerDepthSampler.endWorldRendering();
 
 		RenderSystem.disableBlend();
@@ -186,7 +185,10 @@ public class CompositeRenderer {
 		bindTexture(SamplerUniforms.DEPTH_TEX_2, depthAttachmentNoTranslucents);
 
 		bindTexture(SamplerUniforms.SHADOW_TEX_0, shadowMapRenderer.getDepthTextureId());
-		bindTexture(SamplerUniforms.SHADOW_TEX_1, shadowMapRenderer.getDepthTextureId());
+		bindTexture(SamplerUniforms.SHADOW_TEX_1, shadowMapRenderer.getDepthTextureNoTranslucentsId());
+		bindTexture(SamplerUniforms.SHADOW_COLOR_0, shadowMapRenderer.getColorTexture0Id());
+		bindTexture(SamplerUniforms.SHADOW_COLOR_1, shadowMapRenderer.getColorTexture1Id());
+
 		bindTexture(SamplerUniforms.NOISE_TEX, noiseTexture.getGlId());
 
 		FullScreenQuadRenderer.INSTANCE.begin();
@@ -329,6 +331,10 @@ public class CompositeRenderer {
 			throw new RuntimeException("Shader compilation failed!", e);
 		}
 
+		if (SamplerUniforms.hasShadowSamplers(builder)) {
+			usesShadows = true;
+		}
+
 		CommonUniforms.addCommonUniforms(builder, source.getParent().getPack().getIdMap(), source.getParent().getPackDirectives(), FrameUpdateNotifier.INSTANCE);
 		SamplerUniforms.addCompositeSamplerUniforms(builder);
 		SamplerUniforms.addDepthSamplerUniforms(builder);
@@ -342,5 +348,9 @@ public class CompositeRenderer {
 		for (Pass renderPass : passes) {
 			renderPass.destroy();
 		}
+	}
+
+	public boolean usesShadows() {
+		return usesShadows;
 	}
 }
