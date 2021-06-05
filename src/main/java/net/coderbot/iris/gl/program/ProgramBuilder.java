@@ -11,7 +11,9 @@ import org.lwjgl.opengl.GL20C;
 import org.lwjgl.opengl.GL21C;
 
 public class ProgramBuilder extends ProgramUniforms.Builder {
-	private static final ShaderConstants MACRO_CONSTANTS = ShaderConstants.builder()
+	private static final ShaderConstants EMPTY_CONSTANTS = ShaderConstants.builder().build();
+
+	public static final ShaderConstants MACRO_CONSTANTS = ShaderConstants.builder()
 		.define(StandardMacros.getOsString())
 		.define("MC_VERSION", StandardMacros.getMcVersion())
 		.define("MC_GL_VERSION", StandardMacros.getGlVersion(GL20C.GL_VERSION))
@@ -53,7 +55,7 @@ public class ProgramBuilder extends ProgramUniforms.Builder {
 		fragment = buildShader(ShaderType.FRAGMENT, name + ".fsh", fragmentSource);
 
 		int programId;
-		
+
 		if (geometry != null) {
 			programId = ProgramCreator.create(name, vertex, geometry, fragment);
 		} else {
