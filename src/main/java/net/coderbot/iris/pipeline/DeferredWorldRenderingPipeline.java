@@ -97,6 +97,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 	private final NativeImageBackedSingleColorTexture normals;
 	private final NativeImageBackedSingleColorTexture specular;
 	private final AbstractTexture noise;
+	private final FrameUpdateNotifier updateNotifier;
 
 	private final int waterId;
 	private final float sunPathRotation;
@@ -112,17 +113,19 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 	public DeferredWorldRenderingPipeline(ProgramSet programs) {
 		Objects.requireNonNull(programs);
 
+		this.updateNotifier = new FrameUpdateNotifier();
+
 		// TODO should we clear this at the end of the constructor?
 		this.customUniforms = programs.getPack().customUniforms.build(
-				uniforms -> CameraUniforms.addCameraUniforms(uniforms, FrameUpdateNotifier.INSTANCE),
+				uniforms -> CameraUniforms.addCameraUniforms(uniforms, updateNotifier),
 				ViewportUniforms::addViewportUniforms,
 				WorldTimeUniforms::addWorldTimeUniforms,
 				SystemTimeUniforms::addSystemTimeUniforms,
 				new CelestialUniforms(programs.getPackDirectives().getSunPathRotation())::addCelestialUniforms,
-				holder -> WeatherUniforms.addWeatherUniforms(holder, FrameUpdateNotifier.INSTANCE),
+				holder -> WeatherUniforms.addWeatherUniforms(holder, updateNotifier),
 				holder -> IdMapUniforms.addIdMapUniforms(holder, programs.getPack().getIdMap()),
 				holder -> MatrixUniforms.addMatrixUniforms(holder, programs.getPackDirectives()),
-				holder -> CommonUniforms.generalCommonUniforms(holder, FrameUpdateNotifier.INSTANCE),
+				holder -> CommonUniforms.generalCommonUniforms(holder, updateNotifier),
 				BiomeParameters::biomeParameters
 		);
 
@@ -177,7 +180,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 
 		GlStateManager.activeTexture(GL20C.GL_TEXTURE0);
 
-		this.compositeRenderer = new CompositeRenderer(programs, renderTargets, noise);
+		this.compositeRenderer = new CompositeRenderer(programs, renderTargets, noise, updateNotifier);
 
 		this.usesShadows |= compositeRenderer.usesShadows();
 
@@ -709,5 +712,9 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 
 	public void endShadowRender() {
 		isRenderingShadow = false;
+	}
+
+	public FrameUpdateNotifier getUpdateNotifier() {
+		return updateNotifier;
 	}
 }
