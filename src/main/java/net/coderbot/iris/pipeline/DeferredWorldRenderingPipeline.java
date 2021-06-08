@@ -113,6 +113,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 
 	private final int waterId;
 	private final float sunPathRotation;
+	private final boolean shouldRenderClouds;
 
 	private static final List<GbufferProgram> programStack = new ArrayList<>();
 	private static final List<String> programStackLog = new ArrayList<>();
@@ -125,6 +126,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 	public DeferredWorldRenderingPipeline(ProgramSet programs) {
 		Objects.requireNonNull(programs);
 
+		this.shouldRenderClouds = programs.getPackDirectives().areCloudsEnabled();
 		this.updateNotifier = new FrameUpdateNotifier();
 
 		// TODO should we clear this at the end of the constructor?
@@ -134,7 +136,6 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 				WorldTimeUniforms::addWorldTimeUniforms,
 				SystemTimeUniforms::addSystemTimeUniforms,
 				new CelestialUniforms(programs.getPackDirectives().getSunPathRotation())::addCelestialUniforms,
-				holder -> WeatherUniforms.addWeatherUniforms(holder, updateNotifier),
 				holder -> IdMapUniforms.addIdMapUniforms(holder, programs.getPack().getIdMap()),
 				holder -> MatrixUniforms.addMatrixUniforms(holder, programs.getPackDirectives()),
 				holder -> CommonUniforms.generalCommonUniforms(holder, updateNotifier),
@@ -393,6 +394,11 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 	@Override
 	public boolean shouldDisableDirectionalShading() {
 		return true;
+	}
+
+	@Override
+	public boolean shouldRenderClouds() {
+		return shouldRenderClouds;
 	}
 
 	@Override

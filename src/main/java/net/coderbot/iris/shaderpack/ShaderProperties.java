@@ -16,7 +16,7 @@ import net.coderbot.iris.gl.blending.AlphaTestOverride;
 import net.coderbot.iris.uniforms.custom.CustomUniforms;
 
 public class ShaderProperties {
-	// TODO: clouds
+	private boolean enableClouds = true;
 	private OptionalBoolean oldHandLight;
 	private OptionalBoolean dynamicHandLight;
 	private OptionalBoolean oldLighting;
@@ -65,6 +65,11 @@ public class ShaderProperties {
 
 			if ("texture.noise".equals(key)) {
 				noiseTexturePath = value;
+			}
+
+			if ("clouds".equals(key) && value.equals("off")) {
+				// TODO: Force clouds to fast / fancy as well if the shaderpack wants it
+				enableClouds = false;
 			}
 
 			handleBooleanDirective(key, value, "oldHandLight", bool -> oldHandLight = bool);
@@ -233,6 +238,10 @@ public class ShaderProperties {
 			i.set(properties);
 			return i;
 		}
+	}
+
+	public boolean areCloudsEnabled() {
+		return enableClouds;
 	}
 
 	public OptionalBoolean getOldHandLight() {
