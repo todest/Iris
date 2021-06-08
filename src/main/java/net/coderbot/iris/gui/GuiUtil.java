@@ -5,9 +5,10 @@ import net.coderbot.iris.Iris;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawableHelper;
-import net.minecraft.client.gui.widget.AbstractButtonWidget;
+import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.client.sound.PositionedSoundInstance;
@@ -32,7 +33,7 @@ public final class GuiUtil {
         RenderSystem.enableDepthTest();
         RenderSystem.depthFunc(519);
         RenderSystem.enableTexture();
-        bufferBuilder.begin(7, VertexFormats.POSITION_TEXTURE_COLOR);
+        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
         bufferBuilder.vertex(x, y + height, z).texture(x, y + height / 32.0F).color(64, 64, 64, 255).next();
         bufferBuilder.vertex(x + width, y + height, 0.0D).texture(x + width / 32.0F, y + height / 32.0F).color(64, 64, 64, 255).next();
         bufferBuilder.vertex(x + width, y, z).texture(x + width / 32.0F, y).color(64, 64, 64, 255).next();
@@ -58,7 +59,7 @@ public final class GuiUtil {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferBuilder = tessellator.getBuffer();
         RenderSystem.enableTexture();
-        bufferBuilder.begin(7, VertexFormats.POSITION_TEXTURE_COLOR);
+        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
         bufferBuilder.vertex(x, y + height, z).texture(u, v + vh).color(r, g, b, a).next();
         bufferBuilder.vertex(x + width, y + height, z).texture(u + uw, v + vh).color(r, g, b, a).next();
         bufferBuilder.vertex(x + width, y, z).texture(u + uw, v).color(r, g, b, a).next();
@@ -87,7 +88,7 @@ public final class GuiUtil {
         BufferBuilder bufferBuilder = tessellator.getBuffer();
         RenderSystem.disableTexture();
         RenderSystem.enableBlend();
-        bufferBuilder.begin(7, VertexFormats.POSITION_TEXTURE_COLOR);
+        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
         bufferBuilder.vertex(x, y + height, z).texture(0f, 1f).color(r, g, b, a).next();
         bufferBuilder.vertex(x + width, y + height, z).texture(1f, 1f).color(r, g, b, a).next();
         bufferBuilder.vertex(x + width, y, z).texture(1f, 0f).color(r, g, b, a).next();
@@ -133,7 +134,7 @@ public final class GuiUtil {
             height -= 2;
         }
         if (theme == UiTheme.VANILLA) {
-            MinecraftClient.getInstance().getTextureManager().bindTexture(AbstractButtonWidget.WIDGETS_LOCATION);
+            MinecraftClient.getInstance().getTextureManager().bindTexture(ClickableWidget.WIDGETS_TEXTURE);
             int v = 46 + (selected ? 40 : 20);
             int yp = y + (int)Math.ceil((float)Math.max(0, height - 20) / 2);
             texture(x, yp, -100, width / 2, 20, 0, v);
@@ -173,7 +174,7 @@ public final class GuiUtil {
             int sx = x + 2 + Math.round(progress * (width - 7));
             GuiUtil.fill(sx, (int)(y + (height * 0.75)) - 3, 3, 7, 0xFFFFFFFF);
         } else {
-            MinecraftClient.getInstance().getTextureManager().bindTexture(AbstractButtonWidget.WIDGETS_LOCATION);
+            MinecraftClient.getInstance().getTextureManager().bindTexture(ClickableWidget.WIDGETS_TEXTURE);
 
             int yp = y + (int)Math.ceil((float)Math.max(0, height - 20) / 2);
 
@@ -193,7 +194,7 @@ public final class GuiUtil {
 	 * used for succeeding draw calls.
 	 */
 	public static void bindIrisWidgetsTexture() {
-		client().getTextureManager().bindTexture(IRIS_WIDGETS_TEX);
+		RenderSystem.setShaderTexture(0, IRIS_WIDGETS_TEX);
 	}
 
 	/**
@@ -218,10 +219,10 @@ public final class GuiUtil {
 		int vOffset = disabled ? 46 : hovered ? 86 : 66;
 
 		// Sets RenderSystem to use solid white as the tint color for blend mode, and enables blend mode
-		RenderSystem.blendColor(1.0f, 1.0f, 1.0f, 1.0f);
 		RenderSystem.enableBlend();
 
 		// Sets RenderSystem to be able to use textures when drawing
+		// This doesn't do anything on 1.17
 		RenderSystem.enableTexture();
 
 		// Top left section

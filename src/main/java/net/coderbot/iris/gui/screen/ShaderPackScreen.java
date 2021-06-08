@@ -7,16 +7,15 @@ import net.coderbot.iris.gui.GuiUtil;
 import net.coderbot.iris.gui.ScreenStack;
 import net.coderbot.iris.gui.element.PropertyDocumentWidget;
 import net.coderbot.iris.gui.element.ShaderPackListWidget;
+import net.coderbot.iris.gui.element.ShaderScreenEntryListWidget;
 import net.coderbot.iris.gui.property.*;
 import net.coderbot.iris.shaderpack.Option;
 import net.coderbot.iris.shaderpack.ShaderPack;
 import net.coderbot.iris.shaderpack.ShaderPackConfig;
 import net.coderbot.iris.shaderpack.ShaderProperties;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ScreenTexts;
-import net.minecraft.client.gui.screen.TickableElement;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.LiteralText;
@@ -88,29 +87,29 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		this.shaderPackList = new ShaderPackListWidget(this.client, this.width / 2, this.height, 32, this.height - 58, 0, this.width / 2);
 
 		if (inWorld) {
-			this.shaderPackList.method_31322(false);
+			this.shaderPackList.setRenderBackground(false);
 		}
 
-		this.children.add(shaderPackList);
+		this.addDrawableChild(shaderPackList);
 
 		this.refreshShaderPropertiesWidget();
 
-		this.addButton(new ButtonWidget(bottomCenter + 104, this.height - 27, 100, 20,
+		this.addDrawableChild(new ButtonWidget(bottomCenter + 104, this.height - 27, 100, 20,
 				ScreenTexts.DONE, button -> onClose()));
 
-		this.addButton(new ButtonWidget(bottomCenter, this.height - 27, 100, 20,
+		this.addDrawableChild(new ButtonWidget(bottomCenter, this.height - 27, 100, 20,
 				new TranslatableText("options.iris.apply"), button -> this.applyChanges()));
 
-		this.addButton(new ButtonWidget(bottomCenter - 104, this.height - 27, 100, 20,
+		this.addDrawableChild(new ButtonWidget(bottomCenter - 104, this.height - 27, 100, 20,
 				ScreenTexts.CANCEL, button -> this.dropChangesAndClose()));
 
-		this.addButton(new ButtonWidget(topCenter - 78, this.height - 51, 152, 20,
+		this.addDrawableChild(new ButtonWidget(topCenter - 78, this.height - 51, 152, 20,
 				new TranslatableText("options.iris.openShaderPackFolder"), button -> openShaderPackFolder()));
 
-		this.addButton(new ButtonWidget(topCenter + 78, this.height - 51, 152, 20,
+		this.addDrawableChild(new ButtonWidget(topCenter + 78, this.height - 51, 152, 20,
 				new TranslatableText("options.iris.refreshShaderPacks"), button -> this.shaderPackList.refresh()));
 
-		this.addButton(new IrisConfigScreenButtonWidget(this.width - 26, 6, button -> client.openScreen(new IrisConfigScreen(this))));
+		this.addDrawableChild(new IrisConfigScreenButtonWidget(this.width - 26, 6, button -> client.openScreen(new IrisConfigScreen(this))));
 
 		if (parent != null) {
 			ScreenStack.push(parent);
@@ -119,8 +118,9 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 
 	@Override
 	public void tick() {
-		for (Element e : this.children) {
-			if (e instanceof TickableElement) ((TickableElement) e).tick();
+		super.tick();
+		for (Element e : this.children()) {
+			if (e instanceof ShaderScreenEntryListWidget) ((ShaderScreenEntryListWidget) e).tick();
 		}
 
 		if (this.addedPackDialogTimer > 0) {
@@ -304,7 +304,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 	}
 
 	private void refreshShaderPropertiesWidget() {
-		this.children.remove(shaderProperties);
+		this.remove(shaderProperties);
 
 		float scrollAmount = 0.0f;
 		String page = "screen";
@@ -414,13 +414,13 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 				e.printStackTrace();
 			}
 		});
-		if (this.client.world != null) this.shaderProperties.method_31322(false);
+		if (this.client.world != null) this.shaderProperties.setRenderBackground(false);
 		this.reloadShaderConfig();
 
 		this.shaderProperties.goTo(page);
 		this.shaderProperties.setScrollAmount(this.shaderProperties.getMaxScroll() * scrollAmount);
 
-		this.children.add(shaderProperties);
+		this.addDrawableChild(shaderProperties);
 	}
 
 	private boolean setProfile(ShaderPackConfig config, ShaderProperties shaderProperties, String profileName, List<String> alreadyIncludedProfiles, boolean includeOnly) {

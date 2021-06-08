@@ -1,9 +1,10 @@
 package net.coderbot.iris.shaderpack.transform;
 
 public class StringTransformations implements Transformations {
-	private String version;
+	private String prefix;
 	private StringBuilder injections;
 	private String body;
+	private StringBuilder suffix;
 
 	public StringTransformations(String base) {
 		int versionStringStart = base.indexOf("#version");
@@ -17,9 +18,20 @@ public class StringTransformations implements Transformations {
 
 		int splitPoint = base.indexOf("\n") + 1;
 
-		this.version = prefix + base.substring(0, splitPoint);
+		this.prefix = prefix + base.substring(0, splitPoint);
 		this.injections = new StringBuilder();
 		this.body = base.substring(splitPoint);
+		this.suffix = new StringBuilder("\n");
+	}
+
+	@Override
+	public String getPrefix() {
+		return prefix;
+	}
+
+	@Override
+	public void setPrefix(String prefix) {
+		this.prefix = prefix;
 	}
 
 	@Override
@@ -32,6 +44,9 @@ public class StringTransformations implements Transformations {
 		if (at == InjectionPoint.AFTER_VERSION) {
 			injections.append(line);
 			injections.append('\n');
+		} else if (at == InjectionPoint.END) {
+			suffix.append(line);
+			suffix.append('\n');
 		} else {
 			throw new IllegalArgumentException("Unsupported injection point: " + at);
 		}
@@ -45,13 +60,14 @@ public class StringTransformations implements Transformations {
 			throw new UnsupportedOperationException();
 		}
 
-		version = version.replace(from, to);
+		prefix = prefix.replace(from, to);
 		injections = new StringBuilder(injections.toString().replace(from, to));
 		body = body.replace(from, to);
+		suffix = new StringBuilder(suffix.toString().replace(from, to));
 	}
 
 	@Override
 	public String toString() {
-		return version + injections + body;
+		return prefix + injections + body + suffix;
 	}
 }

@@ -1,15 +1,10 @@
 package net.coderbot.iris;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.client.gl.VertexBuffer;
+import net.minecraft.client.render.*;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.BufferRenderer;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.Matrix4f;
 
 /**
  * Renders the sky horizon. Vanilla Minecraft simply uses the "clear color" for its horizon, and then draws a plane
@@ -43,7 +38,19 @@ public class HorizonRenderer {
 	 */
 	private static final double SIN_22_5 = Math.sin(Math.toRadians(22.5));
 
+	private VertexBuffer buffer;
+
 	public HorizonRenderer() {
+		buffer = new VertexBuffer();
+
+		BufferBuilder builder = Tessellator.getInstance().getBuffer();
+
+		// Build the horizon quads into a buffer
+		builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
+		buildHorizon(builder);
+		builder.end();
+
+		buffer.upload(builder);
 	}
 
 	private void buildQuad(VertexConsumer consumer, double x1, double z1, double x2, double z2) {
@@ -126,19 +133,8 @@ public class HorizonRenderer {
 		return MinecraftClient.getInstance().options.viewDistance * 16;
 	}
 
-	public void renderHorizon(MatrixStack matrices) {
-		BufferBuilder buffer = Tessellator.getInstance().getBuffer();
-
-		// Build the horizon quads into a buffer
-		buffer.begin(GL11.GL_QUADS, VertexFormats.POSITION);
-		buildHorizon(buffer);
-		buffer.end();
-
-		// Render the horizon buffer
-		RenderSystem.pushMatrix();
-		RenderSystem.loadIdentity();
-		RenderSystem.multMatrix(matrices.peek().getModel());
-		BufferRenderer.draw(buffer);
-		RenderSystem.popMatrix();
+	public void renderHorizon(Matrix4f modelView, Matrix4f projection, Shader shader) {
+		// Despite the name, this actually dispatches the draw call using the specified shader.
+		buffer.setShader(modelView, projection, shader);
 	}
 }

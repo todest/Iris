@@ -39,14 +39,19 @@ public class MixinTweakFarPlane {
 	@Shadow
 	private float viewDistance;
 
-	@Redirect(method = "getBasicProjectionMatrix(Lnet/minecraft/client/render/Camera;FZ)Lnet/minecraft/util/math/Matrix4f;", at = @At(value = "FIELD", target = "Lnet/minecraft/client/render/GameRenderer;viewDistance:F"))
+	@Shadow
+	public float method_32796() {
+		throw new AssertionError();
+	}
+
+	@Redirect(method = "getBasicProjectionMatrix(D)Lnet/minecraft/util/math/Matrix4f;", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/GameRenderer;method_32796()F"))
 	private float iris$tweakViewDistanceToMatchOptiFine(GameRenderer renderer) {
 		if (!Iris.getCurrentPack().isPresent()) {
 			// Don't mess with the far plane if no shaderpack is loaded
 			return this.viewDistance;
 		}
 
-		float tweakedViewDistance = this.viewDistance;
+		float tweakedViewDistance = this.method_32796();
 
 		// Halve the distance of the far plane in the projection matrix from vanilla. Normally, the far plane is 4 times
 		// the view distance, but this makes it so that it is only two times the view distance.

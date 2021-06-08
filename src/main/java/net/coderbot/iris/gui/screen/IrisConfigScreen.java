@@ -38,17 +38,17 @@ public class IrisConfigScreen extends Screen implements HudHideable {
         }
 
         this.configProperties  = new PropertyDocumentWidget(client, width, height, 20, this.height - 34, 0, this.width, 26, width - 39);
-        if (inWorld) this.configProperties.method_31322(false);
+        if (inWorld) this.configProperties.setRenderBackground(false);
         this.configProperties.setDocument(this.config.createDocument(this.client.textRenderer, this, this.configProperties, 320), "main");
 
         this.configProperties.setScrollAmount(this.configProperties.getMaxScroll() * scrollAmount);
         this.configProperties.goTo(page);
 
-        this.children.add(configProperties);
+        this.addDrawableChild(configProperties);
 
-        this.addButton(new ButtonWidget(bottomCenter + 104, this.height - 27, 100, 20, ScreenTexts.DONE, button -> { this.saveConfig(); onClose(); }));
-        this.addButton(new ButtonWidget(bottomCenter, this.height - 27, 100, 20, new TranslatableText("options.iris.apply"), button -> this.saveConfig()));
-        this.addButton(new ButtonWidget(bottomCenter - 104, this.height - 27, 100, 20, new TranslatableText("options.iris.refresh"), button -> this.loadConfig()));
+        this.addDrawableChild(new ButtonWidget(bottomCenter + 104, this.height - 27, 100, 20, ScreenTexts.DONE, button -> { this.saveConfig(); onClose(); }));
+        this.addDrawableChild(new ButtonWidget(bottomCenter, this.height - 27, 100, 20, new TranslatableText("options.iris.apply"), button -> this.saveConfig()));
+        this.addDrawableChild(new ButtonWidget(bottomCenter - 104, this.height - 27, 100, 20, new TranslatableText("options.iris.refresh"), button -> this.loadConfig()));
 
         loadConfig();
 

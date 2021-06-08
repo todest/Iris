@@ -12,6 +12,7 @@ import net.minecraft.client.gui.widget.AlwaysSelectedEntryListWidget;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 
@@ -206,5 +207,11 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
         public void render(MatrixStack matrices, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
             this.property.render(matrices, x, y, entryWidth, entryHeight, mouseX, mouseY, hovered, tickDelta);
         }
-    }
+
+		// Appears to be some accessibility thing
+		@Override
+		public Text method_37006() {
+			return null;
+		}
+	}
 }

@@ -13,17 +13,23 @@ import org.lwjgl.opengl.GL21C;
 public class ProgramBuilder extends ProgramUniforms.Builder {
 	private static final ShaderConstants EMPTY_CONSTANTS = ShaderConstants.builder().build();
 
-	public static final ShaderConstants MACRO_CONSTANTS = ShaderConstants.builder()
-		.define(StandardMacros.getOsString())
-		.define("MC_VERSION", StandardMacros.getMcVersion())
-		.define("MC_GL_VERSION", StandardMacros.getGlVersion(GL20C.GL_VERSION))
-		.define("MC_GLSL_VERSION", StandardMacros.getGlVersion(GL20C.GL_SHADING_LANGUAGE_VERSION))
-		.define(StandardMacros.getRenderer())
-		.define(StandardMacros.getVendor())
-		.defineAll(StandardMacros.getGlExtensions())
-		.build();
+	public static final ShaderConstants MACRO_CONSTANTS;
 
-
+	static {
+		try {
+			MACRO_CONSTANTS = ShaderConstants.builder()
+					.define(StandardMacros.getOsString())
+					.define("MC_VERSION", StandardMacros.getMcVersion())
+					.define("MC_GL_VERSION", StandardMacros.getGlVersion(GL20C.GL_VERSION))
+					.define("MC_GLSL_VERSION", StandardMacros.getGlVersion(GL20C.GL_SHADING_LANGUAGE_VERSION))
+					.define(StandardMacros.getRenderer())
+					.define(StandardMacros.getVendor())
+					.defineAll(StandardMacros.getGlExtensions())
+					.build();
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to initialize StandardMacros!", e);
+		}
+	}
 
 	private final int program;
 

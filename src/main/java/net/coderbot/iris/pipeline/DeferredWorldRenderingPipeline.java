@@ -6,7 +6,7 @@ import java.util.*;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.coderbot.iris.Iris;
-import net.coderbot.iris.gl.blending.AlphaTestOverride;
+import net.coderbot.iris.gl.blending.AlphaTest;
 import net.coderbot.iris.gl.framebuffer.GlFramebuffer;
 import net.coderbot.iris.gl.program.Program;
 import net.coderbot.iris.gl.program.ProgramBuilder;
@@ -134,7 +134,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		this.baseline = renderTargets.createFramebufferWritingToMain(new int[] {0});
 
 		// Don't clobber anything in texture unit 0. It probably won't cause issues, but we're just being cautious here.
-		GlStateManager.activeTexture(GL20C.GL_TEXTURE2);
+		GlStateManager.glActiveTexture(GL20C.GL_TEXTURE2);
 
 		// Create some placeholder PBR textures for now
 		normals = new NativeImageBackedSingleColorTexture(127, 127, 255, 255);
@@ -155,7 +155,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 			return new NativeImageBackedNoiseTexture(noiseTextureResolution);
 		});
 
-		GlStateManager.activeTexture(GL20C.GL_TEXTURE0);
+		GlStateManager.glActiveTexture(GL20C.GL_TEXTURE0);
 
 		this.compositeRenderer = new CompositeRenderer(programs, renderTargets, noise, updateNotifier);
 
@@ -385,7 +385,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		builder.bindAttributeLocation(11, "mc_midTexCoord");
 		builder.bindAttributeLocation(12, "at_tangent");
 
-		AlphaTestOverride alphaTestOverride = source.getDirectives().getAlphaTestOverride().orElse(null);
+		AlphaTest alphaTestOverride = source.getDirectives().getAlphaTestOverride().orElse(null);
 
 		if (alphaTestOverride != null) {
 			Iris.logger.info("Configured alpha test override for " + source.getName() + ": " + alphaTestOverride);
@@ -397,10 +397,10 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 	private final class Pass {
 		private final Program program;
 		private final GlFramebuffer framebuffer;
-		private final AlphaTestOverride alphaTestOverride;
+		private final AlphaTest alphaTestOverride;
 		private final boolean disableBlend;
 
-		private Pass(Program program, GlFramebuffer framebuffer, AlphaTestOverride alphaTestOverride, boolean disableBlend) {
+		private Pass(Program program, GlFramebuffer framebuffer, AlphaTest alphaTestOverride, boolean disableBlend) {
 			this.program = program;
 			this.framebuffer = framebuffer;
 			this.alphaTestOverride = alphaTestOverride;
@@ -410,12 +410,12 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		public void use() {
 			// TODO: Binding the texture here is ugly and hacky. It would be better to have a utility function to set up
 			// a given program and bind the required textures instead.
-			GlStateManager.activeTexture(GL15C.GL_TEXTURE0 + SamplerUniforms.NOISE_TEX);
-			GlStateManager.bindTexture(noise.getGlId());
-			GlStateManager.activeTexture(GL15C.GL_TEXTURE2);
-			GlStateManager.bindTexture(normals.getGlId());
-			GlStateManager.activeTexture(GL15C.GL_TEXTURE3);
-			GlStateManager.bindTexture(specular.getGlId());
+			GlStateManager.glActiveTexture(GL15C.GL_TEXTURE0 + SamplerUniforms.NOISE_TEX);
+			GlStateManager._bindTexture(noise.getGlId());
+			GlStateManager.glActiveTexture(GL15C.GL_TEXTURE2);
+			GlStateManager._bindTexture(normals.getGlId());
+			GlStateManager.glActiveTexture(GL15C.GL_TEXTURE3);
+			GlStateManager._bindTexture(specular.getGlId());
 
 			bindTexture(SamplerUniforms.SHADOW_TEX_0, shadowMapRenderer.getDepthTextureId());
 			bindTexture(SamplerUniforms.SHADOW_TEX_1, shadowMapRenderer.getDepthTextureNoTranslucentsId());
@@ -436,7 +436,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 			// Once we start rendering the hand before composite content, this will need to be addressed.
 			bindTexture(SamplerUniforms.DEPTH_TEX_2, depthAttachmentNoTranslucents);
 
-			GlStateManager.activeTexture(GL15C.GL_TEXTURE0);
+			GlStateManager.glActiveTexture(GL15C.GL_TEXTURE0);
 
 			framebuffer.bind();
 			program.use();
@@ -448,13 +448,13 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 			}
 
 			if (disableBlend) {
-				GlStateManager.disableBlend();
+				GlStateManager._disableBlend();
 			}
 		}
 
 		public void stopUsing() {
 			if (alphaTestOverride != null) {
-				AlphaTestOverride.teardown();
+				AlphaTest.teardown();
 			}
 		}
 
@@ -485,9 +485,9 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		compositeRenderer.destroy();
 
 		// Make sure that any custom framebuffers are not bound before destroying render targets
-		GlStateManager.bindFramebuffer(GL30C.GL_READ_FRAMEBUFFER, 0);
-		GlStateManager.bindFramebuffer(GL30C.GL_DRAW_FRAMEBUFFER, 0);
-		GlStateManager.bindFramebuffer(GL30C.GL_FRAMEBUFFER, 0);
+		GlStateManager._glBindFramebuffer(GL30C.GL_READ_FRAMEBUFFER, 0);
+		GlStateManager._glBindFramebuffer(GL30C.GL_DRAW_FRAMEBUFFER, 0);
+		GlStateManager._glBindFramebuffer(GL30C.GL_FRAMEBUFFER, 0);
 
 		MinecraftClient.getInstance().getFramebuffer().beginWrite(false);
 
@@ -567,9 +567,9 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		// We need to copy the current depth texture so that depthtex1 and depthtex2 can contain the depth values for
 		// all non-translucent content, as required.
 		baseline.bindAsReadBuffer();
-		GlStateManager.bindTexture(renderTargets.getDepthTextureNoTranslucents().getTextureId());
+		GlStateManager._bindTexture(renderTargets.getDepthTextureNoTranslucents().getTextureId());
 		GL20C.glCopyTexImage2D(GL20C.GL_TEXTURE_2D, 0, GL20C.GL_DEPTH_COMPONENT, 0, 0, renderTargets.getCurrentWidth(), renderTargets.getCurrentHeight(), 0);
-		GlStateManager.bindTexture(0);
+		GlStateManager._bindTexture(0);
 	}
 
 	public static GbufferProgram getProgramForSheet(ParticleTextureSheet sheet) {

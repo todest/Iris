@@ -46,6 +46,7 @@ import org.lwjgl.opengl.GL30C;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.nio.FloatBuffer;
 import java.util.Objects;
 
 public class ShadowRenderer implements ShadowMapRenderer {
@@ -59,7 +60,7 @@ public class ShadowRenderer implements ShadowMapRenderer {
 	private final WorldRenderingPipeline pipeline;
 	private final ShadowRenderTargets targets;
 
-	private final Program shadowProgram;
+	//private final Program shadowProgram;
 	private final float sunPathRotation;
 
 	private final BufferBuilderStorage buffers;
@@ -93,11 +94,11 @@ public class ShadowRenderer implements ShadowMapRenderer {
 			InternalTextureFormat.RGBA
 		});
 
-		if (shadow != null) {
+		/*if (shadow != null) {
 			this.shadowProgram = createProgram(shadow, directives).getLeft();
 		} else {
 			this.shadowProgram = null;
-		}
+		}*/
 
 		this.sunPathRotation = directives.getSunPathRotation();
 
@@ -116,18 +117,18 @@ public class ShadowRenderer implements ShadowMapRenderer {
 		final ImmutableList<PackShadowDirectives.DepthSamplingSettings> depthSamplingSettings =
 				shadowDirectives.getDepthSamplingSettings();
 
-		GlStateManager.activeTexture(GL20C.GL_TEXTURE4);
+		GlStateManager.glActiveTexture(GL20C.GL_TEXTURE4);
 
-		GlStateManager.bindTexture(getDepthTextureId());
+		GlStateManager._bindTexture(getDepthTextureId());
 		configureDepthSampler(depthSamplingSettings.get(0));
 
-		GlStateManager.bindTexture(getDepthTextureNoTranslucentsId());
+		GlStateManager._bindTexture(getDepthTextureNoTranslucentsId());
 		configureDepthSampler(depthSamplingSettings.get(1));
 
 		// TODO: Configure color samplers
 
-		GlStateManager.bindTexture(0);
-		GlStateManager.activeTexture(GL20C.GL_TEXTURE0);
+		GlStateManager._bindTexture(0);
+		GlStateManager.glActiveTexture(GL20C.GL_TEXTURE0);
 	}
 
 	private void configureDepthSampler(PackShadowDirectives.DepthSamplingSettings settings) {
@@ -300,10 +301,12 @@ public class ShadowRenderer implements ShadowMapRenderer {
 		RenderSystem.viewport(0, 0, resolution, resolution);
 
 		// Set up our orthographic projection matrix and load it into the legacy matrix stack
-		RenderSystem.matrixMode(GL11.GL_PROJECTION);
-		RenderSystem.pushMatrix();
-		GL11.glLoadMatrixf(orthoMatrix);
-		RenderSystem.matrixMode(GL11.GL_MODELVIEW);
+		FloatBuffer projMatBuf = FloatBuffer.allocate(16);
+		projMatBuf.put(orthoMatrix);
+		projMatBuf.flip();
+
+		Matrix4f projectionMatrix = new Matrix4f();
+		projectionMatrix.readColumnMajor(projMatBuf);
 
 		// Disable backface culling
 		// This partially works around an issue where if the front face of a mountain isn't visible, it casts no
@@ -315,11 +318,13 @@ public class ShadowRenderer implements ShadowMapRenderer {
 		RenderSystem.disableCull();
 
 		// Render all opaque terrain
-		worldRenderer.invokeRenderLayer(RenderLayer.getSolid(), modelView, cameraX, cameraY, cameraZ);
-		worldRenderer.invokeRenderLayer(RenderLayer.getCutout(), modelView, cameraX, cameraY, cameraZ);
-		worldRenderer.invokeRenderLayer(RenderLayer.getCutoutMipped(), modelView, cameraX, cameraY, cameraZ);
+		worldRenderer.invokeRenderLayer(RenderLayer.getSolid(), modelView, cameraX, cameraY, cameraZ, projectionMatrix);
+		worldRenderer.invokeRenderLayer(RenderLayer.getCutout(), modelView, cameraX, cameraY, cameraZ, projectionMatrix);
+		worldRenderer.invokeRenderLayer(RenderLayer.getCutoutMipped(), modelView, cameraX, cameraY, cameraZ, projectionMatrix);
 
-		// Reset our shader program in case Sodium overrode it.
+		// TODO: Restore entity & block entity rendering
+
+		/*// Reset our shader program in case Sodium overrode it.
 		//
 		// If we forget to do this entities will be very small on most shaderpacks since they're being rendered
 		// without shaders, which doesn't integrate with their shadow distortion code.
@@ -394,12 +399,13 @@ public class ShadowRenderer implements ShadowMapRenderer {
 		// NB: Don't try to draw the translucent parts of entities afterwards. It'll cause problems since some
 		// shader packs assume that everything drawn afterwards is actually translucent and should cast a colored
 		// shadow...
-		provider.draw();
+		provider.draw();*/
 
 		worldRenderer.getWorld().getProfiler().swap("translucent depth copy");
 
 		// Copy the content of the depth texture before rendering translucent content.
 		// This is needed for the shadowtex0 / shadowtex1 split.
+		targets.getFramebuffer().bindAsReadBuffer();
 		RenderSystem.activeTexture(GL20C.GL_TEXTURE0);
 		RenderSystem.bindTexture(targets.getDepthTextureNoTranslucents().getTextureId());
 		GL20C.glCopyTexImage2D(GL20C.GL_TEXTURE_2D, 0, GL20C.GL_DEPTH_COMPONENT, 0, 0, resolution, resolution, 0);
@@ -409,9 +415,9 @@ public class ShadowRenderer implements ShadowMapRenderer {
 		// TODO: Prevent these calls from scheduling translucent sorting...
 		// It doesn't matter a ton, since this just means that they won't be sorted in the normal rendering pass.
 		// Just something to watch out for, however...
-		worldRenderer.invokeRenderLayer(RenderLayer.getTranslucent(), modelView, cameraX, cameraY, cameraZ);
+		worldRenderer.invokeRenderLayer(RenderLayer.getTranslucent(), modelView, cameraX, cameraY, cameraZ, projectionMatrix);
 		// Note: Apparently tripwire isn't rendered in the shadow pass.
-		// worldRenderer.invokeRenderLayer(RenderLayer.getTripwire(), modelView, cameraX, cameraY, cameraZ);
+		// worldRenderer.invokeRenderLayer(RenderLayer.getTripwire(), modelView, cameraX, cameraY, cameraZ, projectionMatrix);
 
 		// NB: If we want to render anything after translucent terrain, we need to uncomment this line!
 		// setupShadowProgram();
@@ -426,11 +432,6 @@ public class ShadowRenderer implements ShadowMapRenderer {
 
 		// Restore backface culling
 		RenderSystem.enableCull();
-
-		// Make sure to unload the projection matrix
-		RenderSystem.matrixMode(GL11.GL_PROJECTION);
-		RenderSystem.popMatrix();
-		RenderSystem.matrixMode(GL11.GL_MODELVIEW);
 
 		pipeline.endShadowRender();
 		// Note: This unbinds the shadow framebuffer
@@ -448,20 +449,22 @@ public class ShadowRenderer implements ShadowMapRenderer {
 	}
 
 	private void setupShadowProgram() {
-		if (shadowProgram != null) {
+		/*if (shadowProgram != null) {
 			shadowProgram.use();
 			setupAttributes(shadowProgram);
 		} else {
 			GlProgramManager.useProgram(0);
-		}
+		}*/
 	}
 
 	public static String getEntitiesDebugString() {
-		return renderedShadowEntities + "/" + MinecraftClient.getInstance().world.getRegularEntityCount();
+		// TODO: return renderedShadowEntities + "/" + MinecraftClient.getInstance().world.getRegularEntityCount();
+		return "(not supported)";
 	}
 
 	public static String getBlockEntitiesDebugString() {
-		return renderedShadowBlockEntities + "/" + MinecraftClient.getInstance().world.blockEntities.size();
+		// TODO: return renderedShadowBlockEntities + "/" + MinecraftClient.getInstance().world.blockEntities.size();
+		return "(not supported)";
 	}
 
 	private static ClientWorld getWorld() {
@@ -517,8 +520,12 @@ public class ShadowRenderer implements ShadowMapRenderer {
 	public void destroy() {
 		this.targets.destroy();
 
-		if (this.shadowProgram != null) {
+		/*if (this.shadowProgram != null) {
 			this.shadowProgram.destroy();
-		}
+		}*/
+	}
+
+	public GlFramebuffer getFramebuffer() {
+		return targets.getFramebuffer();
 	}
 }

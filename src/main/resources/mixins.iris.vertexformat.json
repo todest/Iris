@@ -6,9 +6,7 @@
   "client": [
     "MixinBufferBuilder",
     "MixinVertexFormatElement",
-    "MixinGlStateManager",
     "MixinChunkRebuildTask",
-    "MixinVertexBuffer",
     "MixinVertexFormat"
   ],
   "injectors": {

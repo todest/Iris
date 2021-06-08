@@ -27,7 +27,7 @@ public class MatrixUniform extends Uniform {
 		if (!newValue.equals(cachedValue)) {
 			cachedValue = newValue.copy();
 
-			cachedValue.writeToBuffer(buffer);
+			cachedValue.writeColumnMajor(buffer);
 			buffer.rewind();
 
 			GL21.glUniformMatrix4fv(location, false, buffer);

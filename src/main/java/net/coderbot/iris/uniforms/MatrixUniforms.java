@@ -58,8 +58,9 @@ public final class MatrixUniforms {
 			// PERF: Don't copy + allocate this matrix every time?
 			Matrix4f copy = parent.get().copy();
 
-			FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
-			copy.writeToBuffer(buffer);
+			FloatBuffer buffer = FloatBuffer.allocate(16);
+
+			copy.writeColumnMajor(buffer);
 			buffer.rewind();
 
 			net.coderbot.iris.vendored.joml.Matrix4f matrix4f = new net.coderbot.iris.vendored.joml.Matrix4f(buffer);

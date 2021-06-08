@@ -4,10 +4,10 @@ import net.coderbot.iris.gui.ScreenStack;
 import net.coderbot.iris.gui.screen.ShaderPackScreen;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.AbstractButtonWidget;
-import net.minecraft.client.gui.widget.OptionButtonWidget;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.options.Option;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.ClickableWidget;
+import net.minecraft.client.option.GameOptions;
+import net.minecraft.client.option.Option;
 import net.minecraft.text.TranslatableText;
 
 public class ShaderPackScreenButtonOption extends Option {
@@ -20,8 +20,8 @@ public class ShaderPackScreenButtonOption extends Option {
         this.client = client;
     }
 
-    @Override
-    public AbstractButtonWidget createButton(GameOptions options, int x, int y, int width) {
-        return new OptionButtonWidget(x, y, width, 20, this, new TranslatableText("options.iris.shaderPackSelection"), button -> client.openScreen(new ShaderPackScreen(this.parent)));
-    }
+	@Override
+	public ClickableWidget createButton(GameOptions options, int x, int y, int width) {
+		return new ButtonWidget(x, y, width, 20, new TranslatableText("options.iris.shaderPackSelection"), button -> client.openScreen(new ShaderPackScreen(this.parent)));
+	}
 }

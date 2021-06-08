@@ -82,7 +82,7 @@ public final class IdMapUniforms {
 
 		BlockState blockAt = world.getBlockState(entity.getPos());
 
-		if (!entity.getType().supports(blockAt.getBlock())) {
+		if (!entity.getType().supports(blockAt)) {
 			// Somehow the block here isn't compatible with the block entity at this location.
 			// I'm not sure how this could ever reasonably happen.
 			return -1;
