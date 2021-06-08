@@ -29,13 +29,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class NewShaderTests {
-	public static ExtendedShader create(String name, ProgramSource source, RenderTargets renderTargets, GlFramebuffer baseline, AlphaTest fallbackAlpha, VertexFormat vertexFormat, boolean hasColorAttrib) throws IOException {
+	public static ExtendedShader create(String name, ProgramSource source, RenderTargets renderTargets, GlFramebuffer baseline, AlphaTest fallbackAlpha, VertexFormat vertexFormat, boolean hasColorAttrib, FrameUpdateNotifier updateNotifier) throws IOException {
 		GlFramebuffer framebuffer = renderTargets.createFramebufferWritingToMain(source.getDirectives().getDrawBuffers());
 
-		return create(name, source, framebuffer, baseline, fallbackAlpha, vertexFormat, hasColorAttrib);
+		return create(name, source, framebuffer, baseline, fallbackAlpha, vertexFormat, hasColorAttrib, updateNotifier);
 	}
 
-	public static ExtendedShader create(String name, ProgramSource source, GlFramebuffer framebuffer, GlFramebuffer baseline, AlphaTest fallbackAlpha, VertexFormat vertexFormat, boolean hasColorAttrib) throws IOException {
+	public static ExtendedShader create(String name, ProgramSource source, GlFramebuffer framebuffer, GlFramebuffer baseline, AlphaTest fallbackAlpha, VertexFormat vertexFormat, boolean hasColorAttrib, FrameUpdateNotifier updateNotifier) throws IOException {
 		AlphaTest alpha = source.getDirectives().getAlphaTestOverride().orElse(fallbackAlpha);
 
 		String vertex = TriforcePatcher.patch(source.getVertexSource().orElseThrow(RuntimeException::new), ShaderType.VERTEX, alpha, true, hasColorAttrib);
@@ -107,7 +107,7 @@ public class NewShaderTests {
 		Files.write(debugOutDir.resolve(name + ".json"), shaderJson.getBytes(StandardCharsets.UTF_8));
 
 		return new ExtendedShader(shaderResourceFactory, name, vertexFormat, framebuffer, baseline, uniforms -> {
-			CommonUniforms.addCommonUniforms(uniforms, source.getParent().getPack().getIdMap(), source.getParent().getPackDirectives(), ((NewWorldRenderingPipeline) Iris.getPipelineManager().getPipeline()).getUpdateNotifier());
+			CommonUniforms.addCommonUniforms(uniforms, source.getParent().getPack().getIdMap(), source.getParent().getPackDirectives(), updateNotifier);
 			//SamplerUniforms.addWorldSamplerUniforms(uniforms);
 			//SamplerUniforms.addDepthSamplerUniforms(uniforms);
 			BuiltinReplacementUniforms.addBuiltinReplacementUniforms(uniforms);

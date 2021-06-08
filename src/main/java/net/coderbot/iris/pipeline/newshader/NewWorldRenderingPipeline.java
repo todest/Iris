@@ -168,7 +168,7 @@ public class NewWorldRenderingPipeline implements WorldRenderingPipeline, CoreWo
 	}
 
 	private Shader createShader(String name, ProgramSource source, AlphaTest fallbackAlpha, VertexFormat vertexFormat, boolean hasColorAttrib) throws IOException {
-		ExtendedShader extendedShader = NewShaderTests.create(name, source, renderTargets, baseline, fallbackAlpha, vertexFormat, hasColorAttrib);
+		ExtendedShader extendedShader = NewShaderTests.create(name, source, renderTargets, baseline, fallbackAlpha, vertexFormat, hasColorAttrib, updateNotifier);
 
 		loadedShaders.add(extendedShader);
 
@@ -208,7 +208,7 @@ public class NewWorldRenderingPipeline implements WorldRenderingPipeline, CoreWo
 	private Shader createShadowShader(String name, ProgramSource source, AlphaTest fallbackAlpha, VertexFormat vertexFormat, boolean hasColorAttrib) throws IOException {
 		GlFramebuffer framebuffer = this.shadowMapRenderer.getFramebuffer();
 
-		ExtendedShader extendedShader = NewShaderTests.create(name, source, framebuffer, baseline, fallbackAlpha, vertexFormat, hasColorAttrib);
+		ExtendedShader extendedShader = NewShaderTests.create(name, source, framebuffer, baseline, fallbackAlpha, vertexFormat, hasColorAttrib, updateNotifier);
 
 		loadedShaders.add(extendedShader);
 
