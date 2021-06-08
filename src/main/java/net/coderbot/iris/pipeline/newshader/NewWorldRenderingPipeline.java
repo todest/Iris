@@ -138,18 +138,18 @@ public class NewWorldRenderingPipeline implements WorldRenderingPipeline, CoreWo
 
 		// TODO: Resolve hasColorAttrib based on the vertex format
 		try {
-			this.skyBasic = createShader("gbuffers_sky_basic", skyBasicSource.orElseThrow(RuntimeException::new), AlphaTest.ALWAYS, VertexFormats.POSITION, false);
-			this.skyBasicColor = createShader("gbuffers_sky_basic_color", skyBasicSource.orElseThrow(RuntimeException::new), AlphaTest.ALWAYS, VertexFormats.POSITION_COLOR, true);
-			this.skyTextured = createShader("gbuffers_sky_textured", skyTexturedSource.orElseThrow(RuntimeException::new), AlphaTest.ALWAYS, VertexFormats.POSITION_TEXTURE, false);
-			this.terrainSolid = createShader("gbuffers_terrain_solid", terrainSource.orElseThrow(RuntimeException::new), AlphaTest.ALWAYS, IrisVertexFormats.TERRAIN, true);
-			this.terrainCutout = createShader("gbuffers_terrain_cutout", terrainSource.orElseThrow(RuntimeException::new), terrainCutoutAlpha, IrisVertexFormats.TERRAIN, true);
-			this.terrainCutoutMipped = createShader("gbuffers_terrain_cutout_mipped", terrainSource.orElseThrow(RuntimeException::new), terrainCutoutAlpha, IrisVertexFormats.TERRAIN, true);
+			this.skyBasic = createShader("gbuffers_sky_basic", skyBasicSource.orElse(null), AlphaTest.ALWAYS, VertexFormats.POSITION, false);
+			this.skyBasicColor = createShader("gbuffers_sky_basic_color", skyBasicSource.orElse(null), AlphaTest.ALWAYS, VertexFormats.POSITION_COLOR, true);
+			this.skyTextured = createShader("gbuffers_sky_textured", skyTexturedSource.orElse(null), AlphaTest.ALWAYS, VertexFormats.POSITION_TEXTURE, false);
+			this.terrainSolid = createShader("gbuffers_terrain_solid", terrainSource.orElse(null), AlphaTest.ALWAYS, IrisVertexFormats.TERRAIN, true);
+			this.terrainCutout = createShader("gbuffers_terrain_cutout", terrainSource.orElse(null), terrainCutoutAlpha, IrisVertexFormats.TERRAIN, true);
+			this.terrainCutoutMipped = createShader("gbuffers_terrain_cutout_mipped", terrainSource.orElse(null), terrainCutoutAlpha, IrisVertexFormats.TERRAIN, true);
 
 			// TODO: Shadow programs should have access to different samplers.
-			this.shadowTerrainCutout = createShadowShader("shadow_terrain_cutout", shadowSource.orElseThrow(RuntimeException::new), terrainCutoutAlpha, IrisVertexFormats.TERRAIN, true);
+			this.shadowTerrainCutout = createShadowShader("shadow_terrain_cutout", shadowSource.orElse(null), terrainCutoutAlpha, IrisVertexFormats.TERRAIN, true);
 
 			if (translucentSource != terrainSource) {
-				this.terrainTranslucent = createShader("gbuffers_translucent", translucentSource.orElseThrow(RuntimeException::new), AlphaTest.ALWAYS, IrisVertexFormats.TERRAIN, true);
+				this.terrainTranslucent = createShader("gbuffers_translucent", translucentSource.orElse(null), AlphaTest.ALWAYS, IrisVertexFormats.TERRAIN, true);
 			} else {
 				this.terrainTranslucent = this.terrainSolid;
 			}
@@ -168,6 +168,8 @@ public class NewWorldRenderingPipeline implements WorldRenderingPipeline, CoreWo
 	}
 
 	private Shader createShader(String name, ProgramSource source, AlphaTest fallbackAlpha, VertexFormat vertexFormat, boolean hasColorAttrib) throws IOException {
+		if (source == null || !source.isValid()) return null;
+
 		ExtendedShader extendedShader = NewShaderTests.create(name, source, renderTargets, baseline, fallbackAlpha, vertexFormat, hasColorAttrib, updateNotifier);
 
 		loadedShaders.add(extendedShader);
@@ -206,6 +208,8 @@ public class NewWorldRenderingPipeline implements WorldRenderingPipeline, CoreWo
 	}
 
 	private Shader createShadowShader(String name, ProgramSource source, AlphaTest fallbackAlpha, VertexFormat vertexFormat, boolean hasColorAttrib) throws IOException {
+		if (source == null || !source.isValid()) return null;
+
 		GlFramebuffer framebuffer = this.shadowMapRenderer.getFramebuffer();
 
 		ExtendedShader extendedShader = NewShaderTests.create(name, source, framebuffer, baseline, fallbackAlpha, vertexFormat, hasColorAttrib, updateNotifier);
