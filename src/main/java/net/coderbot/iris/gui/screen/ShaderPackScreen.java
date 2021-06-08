@@ -1,6 +1,7 @@
 package net.coderbot.iris.gui.screen;
 
 import com.google.common.base.Throwables;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.coderbot.iris.Iris;
 import net.coderbot.iris.config.IrisConfig;
 import net.coderbot.iris.gui.GuiUtil;
@@ -17,6 +18,7 @@ import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ScreenTexts;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;

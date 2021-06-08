@@ -27,7 +27,7 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
     protected boolean resizedRows = false;
 
     protected Supplier<Boolean> save = () -> {
-		return null;
+		 return null;
 	};
     protected Runnable load = () -> {};
 
@@ -211,7 +211,7 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
 		// Appears to be some accessibility thing
 		@Override
 		public Text method_37006() {
-			return null;
+			return new LiteralText("TODO: Accessibility");
 		}
 	}
 }
