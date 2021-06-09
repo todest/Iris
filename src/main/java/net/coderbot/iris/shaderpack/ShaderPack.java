@@ -5,8 +5,11 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 
 import net.coderbot.iris.Iris;
 import net.coderbot.iris.gl.texture.InternalTextureFormat;
@@ -157,10 +160,10 @@ public class ShaderPack {
 		Files.walk(langFolderPath, 1).filter(path -> !Files.isDirectory(path)).forEach(path -> {
 
 			Map<String, String> currentLanguageMap = new HashMap<>();
-			// some shaderpacks use Optifine's file name coding which is different than Minecraft's.
-			// An example of this is using "en_US.lang" compared to "en_us.json"
-			// also note that Optifine uses a property scheme for loading language entries to keep parity with other Optifine features
-			String currentFileName = path.getFileName().toString().toLowerCase();
+			//some shaderpacks use optifines file name coding which is different than minecraft's.
+			//An example of this is using "en_US.lang" compared to "en_us.json"
+			//also note that optifine uses a property scheme for loading language entries to keep parity with other optifine features
+			String currentFileName = path.getFileName().toString().toLowerCase(Locale.ROOT);
 			String currentLangCode = currentFileName.substring(0, currentFileName.lastIndexOf("."));
 			Properties properties = new Properties();
 
