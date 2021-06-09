@@ -45,7 +45,7 @@ public class ShaderPack {
 		this.shaderProperties = loadProperties(root, "shaders.properties")
 			.map(ShaderProperties::new)
 			.orElseGet(ShaderProperties::empty);
-		this.config = new ShaderPackConfig(Iris.getIrisConfig().getShaderPackName());
+		this.config = new ShaderPackConfig(Iris.getIrisConfig().getShaderPackName().orElse(""));
 		this.config.load();
 
 		this.base = new ProgramSet(root, root, this);

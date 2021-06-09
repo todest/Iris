@@ -83,7 +83,7 @@ public class IrisConfig {
 	/**
 	 * Returns the name of the current shaderpack
 	 *
-	 * @return Returns the current shaderpack name - if internal shaders are being used it returns "(internal)"
+	 * @return Returns the current shaderpack name
 	 */
 	public Optional<String> getShaderPackName() {
 		return Optional.ofNullable(shaderPackName);
