@@ -270,7 +270,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 
 		String name = entry.getPackName();
 		boolean changed = this.shaderProperties.saveProperties();
-		if (config.areShadersEnabled() == this.shaderPackList.getEnableShadersButton().enabled && name.equals(config.getShaderPackName()) && !changed) return;
+		if (config.areShadersEnabled() == this.shaderPackList.getEnableShadersButton().enabled && name.equals(config.getShaderPackName().orElse("")) && !changed) return;
 
 		config.setShaderPackName(name);
 		config.setShadersEnabled(this.shaderPackList.getEnableShadersButton().enabled);
