@@ -261,7 +261,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 	}
 
 	private void applyChanges() {
-		ShaderPackListWidget.BaseEntry base = this.shaderPackList.getSelected();
+		ShaderPackListWidget.BaseEntry base = this.shaderPackList.getSelectedOrNull();
 
 		if (!(base instanceof ShaderPackListWidget.ShaderPackEntry)) {
 			return;
@@ -500,7 +500,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 			shaderProperties.loadProperties();
 			return;
 		}
-		this.shaderProperties.setDocument(PropertyDocumentWidget.createShaderpackConfigDocument(this.client.textRenderer, this.width / 2, Iris.getIrisConfig().getShaderPackName(), shaderPack, this.shaderProperties), "screen");
+		this.shaderProperties.setDocument(PropertyDocumentWidget.createShaderpackConfigDocument(this.client.textRenderer, this.width / 2, Iris.getIrisConfig().getShaderPackName().orElse("Unnamed Shader"), shaderPack, this.shaderProperties), "screen");
 		shaderProperties.loadProperties();
 	}
 

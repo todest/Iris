@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPackListWidget.BaseEntry> {
-	public static final List<String> BUILTIN_PACKS = ImmutableList.of("(internal)");
+	public static final List<String> BUILTIN_PACKS = ImmutableList.of();
 
 	private static final Text PACK_LIST_LABEL = new TranslatableText("pack.iris.list.label").formatted(Formatting.ITALIC, Formatting.GRAY);
 	private static final Text SHADERS_DISABLED_LABEL = new TranslatableText("options.iris.shaders.disabled");
@@ -127,7 +127,7 @@ public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPack
 		}
 
 		public boolean isSelected() {
-			return list.getSelected() == this;
+			return list.getSelectedOrNull() == this;
 		}
 
 		public String getPackName() {

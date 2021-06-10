@@ -61,7 +61,7 @@ public class Iris implements ClientModInitializer {
 
 				// A lot of people are reporting visual bugs with Iris + Sodium. This makes it so that if we don't have
 				// the right fork of Sodium, it will just crash.
-				if (!versionString.startsWith("0.2.0_IRIS-SNAPSHOT")) {
+				if (!versionString.startsWith("0.2.0+IRIS")) {
 					throw new IllegalStateException("You do not have a compatible version of Sodium installed! You have " + versionString + " but 0.2.0_IRIS-SNAPSHOT is expected");
 				}
 			}
@@ -141,7 +141,19 @@ public class Iris implements ClientModInitializer {
 
 		// Attempt to load an external shaderpack if it is available
 		if (!irisConfig.isInternal()) {
-			if (!loadExternalShaderpack(irisConfig.getShaderPackName())) {
+			Optional<String> externalName = irisConfig.getShaderPackName();
+
+			if (!externalName.isPresent()) {
+				logger.info("Shaders are disabled because no valid shaderpack is selected");
+
+				currentPack = null;
+				currentPackName = "(off)";
+				internal = false;
+
+				return;
+			}
+
+			if (!loadExternalShaderpack(externalName.get())) {
 				logger.warn("Falling back to normal rendering without shaders because the external shaderpack could not be loaded");
 				setShadersDisabled();
 				currentPackName = "(off) [fallback, check your logs for errors]";

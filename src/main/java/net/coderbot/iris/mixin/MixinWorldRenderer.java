@@ -4,14 +4,11 @@ import net.coderbot.iris.HorizonRenderer;
 import net.coderbot.iris.Iris;
 import net.coderbot.iris.fantastic.FlushableVertexConsumerProvider;
 import net.coderbot.iris.layer.GbufferProgram;
-import net.coderbot.iris.pipeline.DeferredWorldRenderingPipeline;
-import net.coderbot.iris.pipeline.WorldRenderingPipeline;
-import net.coderbot.iris.shaderpack.Option;
-import net.coderbot.iris.shaderpack.ShaderPack;
-import net.coderbot.iris.shaderpack.ShaderPackConfig;
 import net.coderbot.iris.layer.GbufferPrograms;
 import net.coderbot.iris.pipeline.ShadowRenderer;
+import net.coderbot.iris.pipeline.DeferredWorldRenderingPipeline;
 import net.coderbot.iris.pipeline.WorldRenderingPipeline;
+import net.coderbot.iris.pipeline.newshader.CoreWorldRenderingPipeline;
 import net.coderbot.iris.pipeline.newshader.WorldRenderingPhase;
 import net.coderbot.iris.uniforms.CapturedRenderingState;
 import net.coderbot.iris.uniforms.FrameUpdateNotifier;
@@ -59,8 +56,13 @@ public class MixinWorldRenderer {
 		CapturedRenderingState.INSTANCE.setGbufferModelView(matrices.peek().getModel());
 		CapturedRenderingState.INSTANCE.setTickDelta(tickDelta);
 		pipeline = Iris.getPipelineManager().preparePipeline(Iris.getCurrentDimension(), true);
+
 		if (pipeline instanceof DeferredWorldRenderingPipeline) {
 			((DeferredWorldRenderingPipeline) pipeline).getUpdateNotifier().onNewFrame();
+		}
+
+		if (pipeline instanceof CoreWorldRenderingPipeline) {
+			((CoreWorldRenderingPipeline) pipeline).getUpdateNotifier().onNewFrame();
 		}
 
 		pipeline.beginWorldRendering();
@@ -114,7 +116,7 @@ public class MixinWorldRenderer {
 	}*/
 
 	@Inject(method = RENDER_SKY,
-		at = @At(value = "INVOKE", target = "com/mojang/blaze3d/systems/RenderSystem.getShader()Lnet/minecraft/client/render/Shader;", shift = At.Shift.AFTER),
+		at = @At(value = "INVOKE", target = "net/minecraft/client/gl/VertexBuffer.setShader (Lnet/minecraft/util/math/Matrix4f;Lnet/minecraft/util/math/Matrix4f;Lnet/minecraft/client/render/Shader;)V", shift = At.Shift.AFTER),
 		slice = @Slice(to = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/SkyProperties;getFogColorOverride(FF)[F")))
 	private void iris$renderSky$drawHorizon(MatrixStack matrices, Matrix4f projectionMatrix, float f, Runnable runnable, CallbackInfo callback) {
 		new HorizonRenderer().renderHorizon(matrices.peek().getModel().copy(), projectionMatrix.copy(), GameRenderer.getPositionShader());
@@ -144,6 +146,13 @@ public class MixinWorldRenderer {
 	/*@Inject(method = RENDER, at = @At(value = "INVOKE", target = RENDER_CLOUDS))
 	private void iris$beginClouds(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo callback) {
 		pipeline.pushProgram(GbufferProgram.CLOUDS);
+	}
+
+	@Inject(method = "renderClouds", at = @At("HEAD"), cancellable = true)
+	private void iris$maybeRemoveClouds(MatrixStack matrices, float tickDelta, double cameraX, double cameraY, double cameraZ, CallbackInfo ci) {
+		if (!pipeline.shouldRenderClouds()) {
+			ci.cancel();
+		}
 	}
 
 	@Inject(method = RENDER, at = @At(value = "INVOKE", target = RENDER_CLOUDS, shift = At.Shift.AFTER))
@@ -176,17 +185,17 @@ public class MixinWorldRenderer {
 	}*/
 
 	// TODO(21w10a): Deal with render hooks
-	/*@Inject(method = RENDER, at = @At(value = "INVOKE", target = RENDER_WEATHER))
+	@Inject(method = RENDER, at = @At(value = "INVOKE", target = RENDER_WEATHER))
 	private void iris$beginWeather(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo callback) {
-		pipeline.pushProgram(GbufferProgram.WEATHER);
+		pipeline.setPhase(WorldRenderingPhase.WEATHER);
 	}
 
 	@Inject(method = RENDER, at = @At(value = "INVOKE", target = RENDER_WEATHER, shift = At.Shift.AFTER))
 	private void iris$endWeather(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo callback) {
-		pipeline.popProgram(GbufferProgram.WEATHER);
+		pipeline.setPhase(WorldRenderingPhase.OTHER);
 	}
 
-	@Inject(method = RENDER, at = @At(value = "INVOKE", target = RENDER_WORLD_BORDER))
+	/*@Inject(method = RENDER, at = @At(value = "INVOKE", target = RENDER_WORLD_BORDER))
 	private void iris$beginWorldBorder(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo callback) {
 		pipeline.pushProgram(GbufferProgram.TEXTURED_LIT);
 	}

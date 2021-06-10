@@ -49,7 +49,7 @@ public final class CommonUniforms {
 		IdMapUniforms.addIdMapUniforms(uniforms, idMap);
 		MatrixUniforms.addMatrixUniforms(uniforms, directives);
 		SamplerUniforms.addCommonSamplerUniforms(uniforms);
-		HardcodedCustomUniforms.addHardcodedCustomUniforms(uniforms);
+		HardcodedCustomUniforms.addHardcodedCustomUniforms(uniforms, updateNotifier);
 
 		CommonUniforms.generalCommonUniforms(uniforms, updateNotifier);
 	}
@@ -80,7 +80,7 @@ public final class CommonUniforms {
 		return client.world.method_23777(client.cameraEntity.getPos(), CapturedRenderingState.INSTANCE.getTickDelta());
 	}
 
-	private static float getBlindness() {
+	static float getBlindness() {
 		Entity cameraEntity = client.getCameraEntity();
 
 		if (cameraEntity instanceof LivingEntity) {
@@ -102,6 +102,14 @@ public final class CommonUniforms {
 		}
 
 		return ((ClientPlayerEntity)client.cameraEntity).getMoodPercentage();
+	}
+
+	static float getRainStrength() {
+		if (client.world == null) {
+			return 0f;
+		}
+
+		return client.world.getRainGradient(CapturedRenderingState.INSTANCE.getTickDelta());
 	}
 
 	private static Vec2f getEyeBrightness() {

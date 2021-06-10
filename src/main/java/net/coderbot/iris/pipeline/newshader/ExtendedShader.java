@@ -5,6 +5,7 @@ import net.coderbot.iris.gl.framebuffer.GlFramebuffer;
 import net.coderbot.iris.gl.program.ProgramUniforms;
 import net.coderbot.iris.gl.uniform.LocationalUniformHolder;
 import net.coderbot.iris.gl.uniform.UniformHolder;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.GlUniform;
 import net.minecraft.client.render.Shader;
 import net.minecraft.client.render.VertexFormat;
@@ -12,14 +13,19 @@ import net.minecraft.resource.ResourceFactory;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.function.Consumer;
+import java.util.function.IntSupplier;
 
 public class ExtendedShader extends Shader {
+	NewWorldRenderingPipeline parent;
 	ProgramUniforms uniforms;
-	GlFramebuffer writingTo;
+	GlFramebuffer writingToBeforeTranslucent;
+	GlFramebuffer writingToAfterTranslucent;
 	GlFramebuffer baseline;
+	HashMap<String, IntSupplier> dynamicSamplers;
 
-	public ExtendedShader(ResourceFactory resourceFactory, String string, VertexFormat vertexFormat, GlFramebuffer writingTo, GlFramebuffer baseline, Consumer<LocationalUniformHolder> uniformCreator) throws IOException {
+	public ExtendedShader(ResourceFactory resourceFactory, String string, VertexFormat vertexFormat, GlFramebuffer writingToBeforeTranslucent, GlFramebuffer writingToAfterTranslucent, GlFramebuffer baseline, Consumer<LocationalUniformHolder> uniformCreator, NewWorldRenderingPipeline parent) throws IOException {
 		super(resourceFactory, string, vertexFormat);
 
 		int programId = this.getProgramRef();
@@ -28,8 +34,11 @@ public class ExtendedShader extends Shader {
 		uniformCreator.accept(uniformBuilder);
 
 		uniforms = uniformBuilder.buildUniforms();
-		this.writingTo = writingTo;
+		this.writingToBeforeTranslucent = writingToBeforeTranslucent;
+		this.writingToAfterTranslucent = writingToAfterTranslucent;
 		this.baseline = baseline;
+		this.dynamicSamplers = new HashMap<>();
+		this.parent = parent;
 	}
 
 	// TODO: Yarn WTF: That's the unbind method, not the bind method!
@@ -37,20 +46,30 @@ public class ExtendedShader extends Shader {
 	public void bind() {
 		super.bind();
 
-		baseline.bind();
+		MinecraftClient.getInstance().getFramebuffer().beginWrite(false);
 	}
 
 	// TODO: Yarn WTF: That's the bind method...
 	@Override
 	public void upload() {
-		super.upload();
+		dynamicSamplers.forEach((name, supplier) -> this.addIrisSampler(name, supplier.getAsInt()));
 
+		super.upload();
 		uniforms.update();
-		writingTo.bind();
+
+		if (parent.isBeforeTranslucent) {
+			writingToBeforeTranslucent.bind();
+		} else {
+			writingToAfterTranslucent.bind();
+		}
 	}
 
 	public void addIrisSampler(String name, int id) {
 		super.addSampler(name, id);
+	}
+
+	public void addIrisSampler(String name, IntSupplier supplier) {
+		dynamicSamplers.put(name, supplier);
 	}
 
 	@Override

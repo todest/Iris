@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -76,7 +77,7 @@ public class IrisConfig {
 	 * @return if the shaderpack is internal
 	 */
 	public boolean isInternal() {
-		return areShadersEnabled() && shaderPackName == null;
+		return false;
 	}
 
 	/**
@@ -84,19 +85,15 @@ public class IrisConfig {
 	 *
 	 * @return Returns the current shaderpack name - if internal shaders are being used it returns "(internal)"
 	 */
-	public String getShaderPackName() {
-		if (shaderPackName == null) {
-			return "(internal)";
-		}
-
-		return shaderPackName;
+	public Optional<String> getShaderPackName() {
+		return Optional.ofNullable(shaderPackName);
 	}
 
 	/**
 	 * Sets the name of the current shaderpack
 	 */
 	public void setShaderPackName(String name) {
-		if (name.equals("(internal)")) {
+		if (name == null || name.equals("(internal)") || name.isEmpty()) {
 			this.shaderPackName = null;
 		} else {
 			this.shaderPackName = name;
@@ -178,7 +175,7 @@ public class IrisConfig {
 	public Properties write() {
 		Properties properties = new Properties();
 
-		properties.setProperty("shaderPack", getShaderPackName());
+		properties.setProperty("shaderPack", getShaderPackName().orElse(""));
 		properties.setProperty("enableShaders", Boolean.toString(areShadersEnabled()));
 		properties.setProperty("uiTheme", getUITheme().name());
 		properties.setProperty("condenseShaderConfig", Boolean.toString(getIfCondensedShaderConfig()));
