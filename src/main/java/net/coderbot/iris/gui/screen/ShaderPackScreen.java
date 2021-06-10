@@ -500,7 +500,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 			shaderProperties.loadProperties();
 			return;
 		}
-		this.shaderProperties.setDocument(PropertyDocumentWidget.createShaderpackConfigDocument(this.client.textRenderer, this.width / 2, Iris.getIrisConfig().getShaderPackName().orElse("Unnamed Shader"), shaderPack, this.shaderProperties), "screen");
+		this.shaderProperties.setDocument(PropertyDocumentWidget.createShaderpackConfigDocument(this.client.textRenderer, this.width / 2, Iris.getIrisConfig().getShaderPackName().orElse("Unnamed Shaderpack"), shaderPack, this.shaderProperties), "screen");
 		shaderProperties.loadProperties();
 	}
 

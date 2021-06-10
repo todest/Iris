@@ -45,7 +45,6 @@ public final class CommonUniforms {
 		WorldTimeUniforms.addWorldTimeUniforms(uniforms);
 		SystemTimeUniforms.addSystemTimeUniforms(uniforms);
 		new CelestialUniforms(directives.getSunPathRotation()).addCelestialUniforms(uniforms);
-		WeatherUniforms.addWeatherUniforms(uniforms, updateNotifier);
 		IdMapUniforms.addIdMapUniforms(uniforms, idMap);
 		MatrixUniforms.addMatrixUniforms(uniforms, directives);
 		SamplerUniforms.addCommonSamplerUniforms(uniforms);
@@ -68,6 +67,9 @@ public final class CommonUniforms {
 			.uniform2i(PER_FRAME, "eyeBrightness", CommonUniforms::getEyeBrightness)
       		// TODO: Parse the value of const float eyeBrightnessHalflife from the shaderpack's fragment shader configuration
 			.uniform2i(PER_FRAME, "eyeBrightnessSmooth", new SmoothedVec2f(10.0f, CommonUniforms::getEyeBrightness, updateNotifier))
+			.uniform1f(PER_TICK, "rainStrength", CommonUniforms::getRainStrength)
+			// TODO: Parse the value of const float wetnessHalflife from the shaderpacks' fragment configuration
+			.uniform1f(PER_TICK, "wetness", new SmoothedFloat(600f, CommonUniforms::getRainStrength, updateNotifier))
 			.uniform3d(PER_FRAME, "skyColor", CommonUniforms::getSkyColor)
 			.uniform3d(PER_FRAME, "fogColor", CapturedRenderingState.INSTANCE::getFogColor);
 	}

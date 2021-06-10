@@ -83,7 +83,7 @@ public class IrisConfig {
 	/**
 	 * Returns the name of the current shaderpack
 	 *
-	 * @return Returns the current shaderpack name - if internal shaders are being used it returns "(internal)"
+	 * @return Returns the current shaderpack name
 	 */
 	public Optional<String> getShaderPackName() {
 		return Optional.ofNullable(shaderPackName);
@@ -162,8 +162,10 @@ public class IrisConfig {
 		uiTheme = properties.getProperty("uiTheme", this.uiTheme);
 		condenseShaderConfig = Boolean.parseBoolean(properties.getProperty("condenseShaderConfig", String.valueOf(this.condenseShaderConfig)));
 
-		if (shaderPackName != null && shaderPackName.equals("(internal)")) {
-			shaderPackName = null;
+		if (shaderPackName != null) {
+			if (shaderPackName.equals("(internal)") || shaderPackName.isEmpty()) {
+				shaderPackName = null;
+			}
 		}
 	}
 

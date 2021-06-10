@@ -88,7 +88,7 @@ public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPack
 	public void addEntry(int index, String name) {
 		ShaderPackEntry entry = new ShaderPackEntry(index, this, name);
 
-		if (Iris.getIrisConfig().getShaderPackName().equals(name)) {
+		if (Iris.getIrisConfig().getShaderPackName().orElse("").equals(name)) {
 			this.setSelected(entry);
 		}
 
