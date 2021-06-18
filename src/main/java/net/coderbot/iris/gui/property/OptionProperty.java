@@ -5,8 +5,10 @@ import net.coderbot.iris.Iris;
 import net.coderbot.iris.gui.GuiUtil;
 import net.coderbot.iris.gui.element.PropertyDocumentWidget;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
@@ -24,9 +26,14 @@ public abstract class OptionProperty<T> extends ValueProperty<T> {
         this.isSlider = isSlider;
     }
 
-    public void cycle() {
-        this.index++;
-        if(index >= values.size()) index = 0;
+    public void cycle(boolean reverse) {
+    	if (reverse) {
+			this.index--;
+			if (index < 0) index = values.size() - 1;
+		} else {
+    		this.index++;
+			if (index >= values.size()) index = 0;
+		}
         this.valueText = null;
     }
 
@@ -57,7 +64,8 @@ public abstract class OptionProperty<T> extends ValueProperty<T> {
         if (isButtonHovered(mouseX, true) && button == 0) {
             GuiUtil.playButtonClickSound();
             if (!isSlider) {
-                cycle();
+            	// Cycle in reverse if the shift key is pressed
+            	cycle(InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_SHIFT));
             }
             return true;
         }
