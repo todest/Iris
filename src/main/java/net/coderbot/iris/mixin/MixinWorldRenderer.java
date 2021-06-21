@@ -231,23 +231,13 @@ public class MixinWorldRenderer {
 		pipeline.beginTranslucents();
 	}
 
-	@Inject(method = RENDER, at = @At(value = "CONSTANT", args = "stringValue=blockentities"), locals = LocalCapture.CAPTURE_FAILHARD)
-	private void iris$StartBlockEntities(MatrixStack matrices, float tickDelta, long limitTime,
-										 boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer,
-										 LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f,
-										 CallbackInfo ci, Profiler profiler, Vec3d vec3d, double d, double e, double f,
-										 Matrix4f matrix4f2, boolean bl, Frustum frustum2, boolean bl3,
-										 VertexConsumerProvider.Immediate immediate) {
+	@Inject(method = RENDER, at = @At(value = "CONSTANT", args = "stringValue=blockentities"))
+	private void iris$startBlockEntities(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo ci) {
 		pipeline.setPhase(WorldRenderingPhase.BLOCK_ENTITIES);
 	}
 
-	@Inject(method = RENDER, at = @At(value = "CONSTANT", args = "stringValue=destroyProgress"), locals = LocalCapture.CAPTURE_FAILHARD)
-	private void iris$EndBlockEntities(MatrixStack matrices, float tickDelta, long limitTime,
-									   boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer,
-									   LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f,
-									   CallbackInfo ci, Profiler profiler, Vec3d vec3d, double d, double e, double f,
-									   Matrix4f matrix4f2, boolean bl, Frustum frustum2, boolean bl3,
-									   VertexConsumerProvider.Immediate immediate) {
+	@Inject(method = RENDER, at = @At(value = "CONSTANT", args = "stringValue=destroyProgress"))
+	private void iris$endBlockEntities(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo ci) {
 		pipeline.setPhase(WorldRenderingPhase.OTHER);
 	}
 }
