@@ -216,7 +216,7 @@ public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPack
 		public void render(MatrixStack matrices, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
 			GuiUtil.bindIrisWidgetsTexture();
 
-			GuiUtil.drawButton(matrices, x - 2, y - 3, entryWidth, 18, hovered, false);
+			GuiUtil.drawButton(matrices, x - 2, y - 3, entryWidth, 18, hovered, false, false);
 
 			Text label = this.enabled ? SHADERS_ENABLED_LABEL : SHADERS_DISABLED_LABEL;
 

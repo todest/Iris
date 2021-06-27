@@ -5,7 +5,7 @@ import net.coderbot.iris.Iris;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawableHelper;
-import net.minecraft.client.gui.widget.ClickableWidget;
+import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.render.*;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.client.sound.PositionedSoundInstance;
@@ -125,68 +125,6 @@ public final class GuiUtil {
         return t;
     }
 
-    public static void drawButton(int x, int y, int width, int height, boolean selected, boolean isLink) {
-        UiTheme theme = Iris.getIrisConfig().getUITheme();
-        if (theme == UiTheme.AQUA) {
-            y += 1;
-            height -= 2;
-        }
-        if (theme == UiTheme.VANILLA) {
-            MinecraftClient.getInstance().getTextureManager().bindTexture(ClickableWidget.WIDGETS_TEXTURE);
-            int v = 46 + (selected ? 40 : 20);
-            int yp = y + (int)Math.ceil((float)Math.max(0, height - 20) / 2);
-            texture(x, yp, -100, width / 2, 20, 0, v);
-            texture(x + width / 2, yp, -100, width / 2, 20, 200 - (width / 2), v);
-        } else {
-            if (selected) {
-                fill(x, y, width, height, theme == UiTheme.IRIS ? 0x8AE0E0E0 : 0xE0000000);
-                if(theme == UiTheme.AQUA && isLink) GuiUtil.fill(x, y + height, width, 1, 0xFF94E4D3);
-            } else if(theme == UiTheme.IRIS) {
-                borderedRect(x, y, -100, width, height, 0x8AE0E0E0);
-            } else {
-                fill(x, y, width, height, 0x90000000);
-            }
-        }
-    }
-
-    public static void drawSlider(int x, int y, int width, int height, boolean selected, float progress) {
-        UiTheme theme = Iris.getIrisConfig().getUITheme();
-        if (theme == UiTheme.IRIS) {
-            int color = 0x8AE0E0E0;
-
-            GuiUtil.borderedRect(x, y + 2, -100, width, height - 4, color);
-            GuiUtil.fill(x + 1, y + 3, width - 2, height - 6, 0x73000000);
-
-            int sx = (x + 2) + Math.round(progress * (width - 10));
-
-            if (selected) {
-                GuiUtil.fill(sx, y + 4, 6, height - 8, color);
-            } else {
-                GuiUtil.borderedRect(sx, y + 4, -100, 6, height - 8, color);
-            }
-        } else if (theme == UiTheme.AQUA) {
-            fill(x, y, width, height, selected ? 0xE0000000 : 0x90000000);
-
-            GuiUtil.fill(x + 2, (int)(y + (height * 0.75)), width - 4, 1, 0xFFFFFFFF);
-
-            int sx = x + 2 + Math.round(progress * (width - 7));
-            GuiUtil.fill(sx, (int)(y + (height * 0.75)) - 3, 3, 7, 0xFFFFFFFF);
-        } else {
-            MinecraftClient.getInstance().getTextureManager().bindTexture(ClickableWidget.WIDGETS_TEXTURE);
-
-            int yp = y + (int)Math.ceil((float)Math.max(0, height - 20) / 2);
-
-            texture(x, yp, -100, width / 2, 20, 0, 46);
-            texture(x + width / 2, yp, -100, width / 2, 20, 200 - (width / 2), 46);
-
-            int sx = x + Math.round(progress * (width - 8));
-            int sv = (selected ? 2 : 1) * 20;
-
-            texture(sx, yp, -100, 4, 20, 0, 46 + sv);
-            texture(sx + 3, yp, -100, 4, 20, 196, 46 + sv);
-        }
-    }
-
 	/**
 	 * Binds Iris's widgets texture to be
 	 * used for succeeding draw calls.
@@ -206,30 +144,101 @@ public final class GuiUtil {
 	 * @param hovered Whether the button is being hovered over with the mouse
 	 * @param disabled Whether the button should use the "disabled" texture
 	 */
-	public static void drawButton(MatrixStack matrices, int x, int y, int width, int height, boolean hovered, boolean disabled) {
-		// Create variables for half of the width and height.
-		// Will not be exact when width and height are odd, but
-		// that case is handled within the draw calls.
-		int halfWidth = width / 2;
-		int halfHeight = height / 2;
+	public static void drawButton(MatrixStack matrices, int x, int y, int width, int height, boolean hovered, boolean disabled, boolean isLink) {
+		UiTheme theme = Iris.getIrisConfig().getUITheme();
+		if (theme == UiTheme.AQUA) {
+			y += 1;
+			height -= 2;
+		}
+		if (theme == UiTheme.VANILLA) {
+			RenderSystem.setShaderTexture(0, ButtonWidget.WIDGETS_TEXTURE);
 
-		// V offset for which button texture to use
-		int vOffset = disabled ? 46 : hovered ? 86 : 66;
+			// Create variables for half of the width and height.
+			// Will not be exact when width and height are odd, but
+			// that case is handled within the draw calls.
+			int halfWidth = width / 2;
+			int halfHeight = height / 2;
 
-		// Sets RenderSystem to use solid white as the tint color for blend mode, and enables blend mode
-		RenderSystem.enableBlend();
+			// V offset for which button texture to use
+			int vOffset = disabled ? 46 : hovered ? 86 : 66;
 
-		// Sets RenderSystem to be able to use textures when drawing
-		// This doesn't do anything on 1.17
-		RenderSystem.enableTexture();
+			// Sets RenderSystem to use solid white as the tint color for blend mode, and enables blend mode
+			RenderSystem.enableBlend();
 
-		// Top left section
-		DrawableHelper.drawTexture(matrices, x, y, 0, vOffset, halfWidth, halfHeight, 256, 256);
-		// Top right section
-		DrawableHelper.drawTexture(matrices, x + halfWidth, y, 200 - (width - halfWidth), vOffset, width - halfWidth, halfHeight, 256, 256);
-		// Bottom left section
-		DrawableHelper.drawTexture(matrices, x, y + halfHeight, 0, vOffset + (20 - (height - halfHeight)), halfWidth, height - halfHeight, 256, 256);
-		// Bottom right section
-		DrawableHelper.drawTexture(matrices, x + halfWidth, y + halfHeight, 200 - (width - halfWidth), vOffset + (20 - (height - halfHeight)), width - halfWidth, height - halfHeight, 256, 256);
+			// Sets RenderSystem to be able to use textures when drawing
+			// This doesn't do anything on 1.17
+			RenderSystem.enableTexture();
+
+			// Top left section
+			DrawableHelper.drawTexture(matrices, x, y, 0, vOffset, halfWidth, halfHeight, 256, 256);
+			// Top right section
+			DrawableHelper.drawTexture(matrices, x + halfWidth, y, 200 - (width - halfWidth), vOffset, width - halfWidth, halfHeight, 256, 256);
+			// Bottom left section
+			DrawableHelper.drawTexture(matrices, x, y + halfHeight, 0, vOffset + (20 - (height - halfHeight)), halfWidth, height - halfHeight, 256, 256);
+			// Bottom right section
+			DrawableHelper.drawTexture(matrices, x + halfWidth, y + halfHeight, 200 - (width - halfWidth), vOffset + (20 - (height - halfHeight)), width - halfWidth, height - halfHeight, 256, 256);
+		} else {
+			if (hovered) {
+				fill(x, y, width, height, theme == UiTheme.IRIS ? 0x8AE0E0E0 : 0xE0000000);
+				if (theme == UiTheme.AQUA && isLink) GuiUtil.fill(x, y + height, width, 1, 0xFF94E4D3);
+			} else if (theme == UiTheme.IRIS) {
+				borderedRect(x, y, -100, width, height, 0x8AE0E0E0);
+			} else {
+				fill(x, y, width, height, 0x90000000);
+			}
+		}
+	}
+
+	public static void drawSlider(MatrixStack matrices, int x, int y, int width, int height, boolean hovered, float progress) {
+		UiTheme theme = Iris.getIrisConfig().getUITheme();
+		if (theme == UiTheme.IRIS) {
+			int color = 0x8AE0E0E0;
+
+			GuiUtil.borderedRect(x, y + 2, -100, width, height - 4, color);
+			GuiUtil.fill(x + 1, y + 3, width - 2, height - 6, 0x73000000);
+
+			int sx = (x + 2) + Math.round(progress * (width - 10));
+
+			if (hovered) {
+				GuiUtil.fill(sx, y + 4, 6, height - 8, color);
+			} else {
+				GuiUtil.borderedRect(sx, y + 4, -100, 6, height - 8, color);
+			}
+		} else if (theme == UiTheme.AQUA) {
+			fill(x, y, width, height, hovered ? 0xE0000000 : 0x90000000);
+
+			GuiUtil.fill(x + 2, (int)(y + (height * 0.75)), width - 4, 1, 0xFFFFFFFF);
+
+			int sx = x + 2 + Math.round(progress * (width - 7));
+			GuiUtil.fill(sx, (int)(y + (height * 0.75)) - 3, 3, 7, 0xFFFFFFFF);
+		} else {
+			RenderSystem.setShaderTexture(0, ButtonWidget.WIDGETS_TEXTURE);
+
+			// Create variables for half of the width and height.
+			// Will not be exact when width and height are odd, but
+			// that case is handled within the draw calls.
+			int halfWidth = width / 2;
+			int halfHeight = height / 2;
+
+			// V offset for which button texture to use
+			int vOffset = 46;
+
+			// Top left section
+			DrawableHelper.drawTexture(matrices, x, y, 0, vOffset, halfWidth, halfHeight, 256, 256);
+			// Top right section
+			DrawableHelper.drawTexture(new MatrixStack(), x + halfWidth, y, 200 - (width - halfWidth), vOffset, width - halfWidth, halfHeight, 256, 256);
+			// Bottom left section
+			DrawableHelper.drawTexture(new MatrixStack(), x, y + halfHeight, 0, vOffset + (20 - (height - halfHeight)), halfWidth, height - halfHeight, 256, 256);
+			// Bottom right section
+			DrawableHelper.drawTexture(new MatrixStack(), x + halfWidth, y + halfHeight, 200 - (width - halfWidth), vOffset + (20 - (height - halfHeight)), width - halfWidth, height - halfHeight, 256, 256);
+
+			int yp = y + (int)Math.ceil((float)Math.max(0, height - 20) / 2);
+
+			int sx = x + Math.round(progress * (width - 8));
+			int sv = (hovered ? 2 : 1) * 20;
+
+			texture(sx, yp, -100, 4, 20, 0, 46 + sv);
+			texture(sx + 3, yp, -100, 4, 20, 196, 46 + sv);
+		}
 	}
 }
