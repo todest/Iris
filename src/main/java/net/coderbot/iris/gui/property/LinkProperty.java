@@ -31,15 +31,10 @@ public class LinkProperty extends Property {
 
     @Override
     public void render(MatrixStack matrices, int x, int y, int width, int height, int mouseX, int mouseY, boolean isHovered, float delta) {
-        int color = 0x8AE0E0E0;
         int bx = x + 4;
         int bw = width - 12;
-        /*if(isHovered) {
-            GuiUtil.fill(bx, y, bw, height, color);
-        } else {
-            GuiUtil.borderedRect(bx, y, -100, bw, height, color);
-        }*/
-        GuiUtil.drawButton(bx, y, bw, height, isHovered, true);
+
+        GuiUtil.drawButton(matrices, bx, y, bw, height, isHovered, false, true);
         MinecraftClient mc = MinecraftClient.getInstance();
         int tx;
         int w = mc.textRenderer.getWidth(this.label);

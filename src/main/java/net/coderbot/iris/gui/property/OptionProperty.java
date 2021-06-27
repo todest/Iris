@@ -96,7 +96,7 @@ public abstract class OptionProperty<T> extends ValueProperty<T> {
         int bx = (int)(x + (width * 0.6)) - 7;
         int bw = (int)(width * 0.4);
 
-        GuiUtil.drawButton(bx, y, bw, height, this.isButtonHovered(mouseX, isHovered), false);
+        GuiUtil.drawButton(matrices, bx, y, bw, height, this.isButtonHovered(mouseX, isHovered), false, false);
 
         Text vt = this.getValueText();
         this.drawText(mc, vt, matrices, (int)(x + (width * 0.8)) - (mc.textRenderer.getWidth(vt) / 2) - 7, y + (height / 2), 0xFFFFFF, false, true, true);
@@ -107,7 +107,7 @@ public abstract class OptionProperty<T> extends ValueProperty<T> {
         int sx = (int)(x + (width * 0.6)) - 7;
         int sw = (int)(width * 0.4);
 
-        GuiUtil.drawSlider(sx, y, sw, height, this.isButtonHovered(mouseX, isHovered), progress);
+        GuiUtil.drawSlider(matrices, sx, y, sw, height, this.isButtonHovered(mouseX, isHovered), progress);
 
         Text vt = this.getValueText();
         this.drawText(mc, vt, matrices, (int)(x + (width * 0.8)) - (mc.textRenderer.getWidth(vt) / 2) - 7, y + (height / 2), 0xFFFFFF, false, true, true);
