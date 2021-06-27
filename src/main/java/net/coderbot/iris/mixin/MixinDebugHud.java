@@ -19,7 +19,9 @@ public abstract class MixinDebugHud {
         List<String> messages = cir.getReturnValue();
 
         messages.add("");
-        if (Iris.getIrisConfig().areShadersEnabled()) {
+        messages.add("[Iris] Version: " + Iris.getFormattedVersion());
+        messages.add("");
+		if (Iris.getIrisConfig().areShadersEnabled()) {
 			messages.add("[Iris] Shaderpack: " + Iris.getCurrentPackName());
 		} else {
 			messages.add("[Iris] Shaders Disabled");
