@@ -19,22 +19,23 @@ public abstract class MixinDebugHud {
         List<String> messages = cir.getReturnValue();
 
         messages.add("");
-        if (Iris.getIrisConfig().areShadersEnabled()) {
-			messages.add("[Iris] Shaderpack: " + Iris.getCurrentPackName());
-		} else {
-			messages.add("[Iris] Shaders Disabled");
-		}
+        messages.add("[Iris] Version: " + Iris.getFormattedVersion());
+        messages.add("");
+        if (Iris.getIrisConfig().areShadersEnabled())
+          messages.add("[Iris] Shaderpack: " + Iris.getCurrentPackName());
+    	else {
+          messages.add("[Iris] Shaders Disabled");
+        }
     }
 
 	@Inject(method = "getLeftText", at = @At("RETURN"))
 	private void appendShadowDebugText(CallbackInfoReturnable<List<String>> cir) {
 		List<String> messages = cir.getReturnValue();
 
-		// TODO: No sodium on 1.17
-		/*if (!FabricLoader.getInstance().isModLoaded("sodium") && Iris.getCurrentPack().isPresent()) {
+		if (!FabricLoader.getInstance().isModLoaded("sodium") && Iris.getCurrentPack().isPresent()) {
 			messages.add(1, Formatting.YELLOW + "[Iris] Sodium isn't installed; you will have poor performance.");
 			messages.add(2, Formatting.YELLOW + "[Iris] Install the compatible Sodium fork if you want to run benchmarks or get higher FPS!");
-		}*/
+		}
 
 		Iris.getPipelineManager().getPipeline().addDebugText(messages);
 	}
