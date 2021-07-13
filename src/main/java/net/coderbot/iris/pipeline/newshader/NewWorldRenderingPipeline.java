@@ -649,7 +649,6 @@ public class NewWorldRenderingPipeline implements WorldRenderingPipeline, CoreWo
 	private void destroyShaders() {
 		// NB: If you forget this, shader reloads won't work!
 		loadedShaders.forEach(shader -> {
-			// TODO: Yarn WTF: This is the unbind method, not the bind method...
 			shader.unbind();
 			shader.close();
 		});
