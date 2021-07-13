@@ -111,7 +111,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		this.addDrawableChild(new ButtonWidget(topCenter + 78, this.height - 51, 152, 20,
 				new TranslatableText("options.iris.refreshShaderPacks"), button -> this.shaderPackList.refresh()));
 
-		this.addDrawableChild(new IrisConfigScreenButtonWidget(this.width - 26, 6, button -> client.openScreen(new IrisConfigScreen(this))));
+		this.addDrawableChild(new IrisConfigScreenButtonWidget(this.width - 26, 6, button -> client.setScreen(new IrisConfigScreen(this))));
 
 		if (parent != null) {
 			ScreenStack.push(parent);
@@ -252,7 +252,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		}
 
 		ScreenStack.pull(this.getClass());
-		client.openScreen(ScreenStack.pop());
+		client.setScreen(ScreenStack.pop());
 	}
 
 	private void dropChangesAndClose() {

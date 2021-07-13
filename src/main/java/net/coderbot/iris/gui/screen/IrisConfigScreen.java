@@ -71,7 +71,7 @@ public class IrisConfigScreen extends Screen implements HudHideable {
     @Override
     public void onClose() {
 		ScreenStack.pull(this.getClass());
-		client.openScreen(ScreenStack.pop());
+		client.setScreen(ScreenStack.pop());
 	}
 
     private void loadConfig() {
