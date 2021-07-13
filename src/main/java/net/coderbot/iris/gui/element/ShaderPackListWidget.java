@@ -139,7 +139,7 @@ public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPack
 
 		// Appears to be some accessibility thing
 		@Override
-		public Text method_37006() {
+		public Text getNarration() {
 			return new TranslatableText("narrator.select", packName);
 		}
 
@@ -195,7 +195,7 @@ public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPack
 
 		// Appears to be some accessibility thing
 		@Override
-		public Text method_37006() {
+		public Text getNarration() {
 			return label;
 		}
 
@@ -225,7 +225,7 @@ public class ShaderPackListWidget extends ShaderScreenEntryListWidget<ShaderPack
 
 		// Appears to be some accessibility thing
 		@Override
-		public Text method_37006() {
+		public Text getNarration() {
 			return new TranslatableText("narration.button", this.enabled ? SHADERS_ENABLED_LABEL : SHADERS_DISABLED_LABEL);
 		}
 

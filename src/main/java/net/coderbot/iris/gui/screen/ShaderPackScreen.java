@@ -111,7 +111,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		this.addDrawableChild(new ButtonWidget(topCenter + 78, this.height - 51, 152, 20,
 				new TranslatableText("options.iris.refreshShaderPacks"), button -> this.shaderPackList.refresh()));
 
-		this.addDrawableChild(new IrisConfigScreenButtonWidget(this.width - 26, 6, button -> client.openScreen(new IrisConfigScreen(this))));
+		this.addDrawableChild(new IrisConfigScreenButtonWidget(this.width - 26, 6, button -> client.setScreen(new IrisConfigScreen(this))));
 
 		if (parent != null) {
 			ScreenStack.push(parent);
@@ -252,7 +252,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 		}
 
 		ScreenStack.pull(this.getClass());
-		client.openScreen(ScreenStack.pop());
+		client.setScreen(ScreenStack.pop());
 	}
 
 	private void dropChangesAndClose() {
@@ -506,7 +506,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 
 	public class IrisConfigScreenButtonWidget extends ButtonWidget {
 		public IrisConfigScreenButtonWidget(int x, int y, PressAction press) {
-			super(x, y, 20, 20, LiteralText.EMPTY, press);
+			super(x, y, 20, 20, new TranslatableText("tooltip.iris.config"), press);
 		}
 
 		@Override
@@ -515,7 +515,7 @@ public class ShaderPackScreen extends Screen implements HudHideable {
 			drawTexture(matrices, x, y, isMouseOver(mouseX, mouseY) ? 20 : 0, 0, 20, 20);
 
 			if (isMouseOver(mouseX, mouseY)) {
-				renderTooltip(matrices, new TranslatableText("tooltip.iris.config"), mouseX, mouseY);
+				renderTooltip(matrices, mouseX, mouseY);
 			}
 		}
 	}

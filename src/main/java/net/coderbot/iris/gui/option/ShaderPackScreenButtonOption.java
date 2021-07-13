@@ -22,6 +22,6 @@ public class ShaderPackScreenButtonOption extends Option {
 
 	@Override
 	public ClickableWidget createButton(GameOptions options, int x, int y, int width) {
-		return new ButtonWidget(x, y, width, 20, new TranslatableText("options.iris.shaderPackSelection"), button -> client.openScreen(new ShaderPackScreen(this.parent)));
+		return new ButtonWidget(x, y, width, 20, new TranslatableText("options.iris.shaderPackSelection"), button -> client.setScreen(new ShaderPackScreen(this.parent)));
 	}
 }
