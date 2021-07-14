@@ -210,7 +210,7 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
 
 		// Appears to be some accessibility thing
 		@Override
-		public Text method_37006() {
+		public Text getNarration() {
 			return new LiteralText("TODO: Accessibility");
 		}
 	}
