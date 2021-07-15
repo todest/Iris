@@ -44,8 +44,6 @@ body:
       label: Shaderpack Used
       description: If this issue is specific to a certain shaderpack, please provide the name and version of the shaderpack used
       placeholder: ex. Sildurs Vibrant Shaders v1.29 High
-    validations:
-      required: true
   - type: dropdown
     id: sodium
     attributes:
