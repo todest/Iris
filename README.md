@@ -1,6 +1,7 @@
 ![Iris: An open-source shaders mod compatible with OptiFine shaderpacks](docs/banner.png)
 
-# Iris
+# Iris (Starline)
+A fork of Iris focused on bringing fixes and features to the user faster and to provide a better in-game user experience.
 
 ## Links
 
