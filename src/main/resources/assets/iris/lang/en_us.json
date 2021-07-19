@@ -21,6 +21,7 @@
   "property.iris.title.configScreen": "Configure Iris",
   "property.iris.uiTheme": "UI Theme",
   "property.iris.condenseShaderConfig": "Condense Shader Pack Config",
+  "property.iris.disableEntityRenderingOptimizations": "Disable Entity Rendering Optimizations (may workaround memory leak issues at the expense of frames)",
 
   "tooltip.iris.config": "Configure Iris",
 
