@@ -2,6 +2,7 @@ package net.coderbot.iris.config;
 
 import com.google.common.collect.ImmutableList;
 import net.coderbot.iris.Iris;
+import net.coderbot.iris.fantastic.ExtendedBufferStorage;
 import net.coderbot.iris.gui.GuiUtil;
 import net.coderbot.iris.gui.screen.ShaderPackScreen;
 import net.coderbot.iris.gui.UiTheme;
@@ -13,7 +14,6 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A class dedicated to storing the config values of shaderpacks.
@@ -50,6 +49,11 @@ public class IrisConfig {
 	 * Whether to display shader pack config screens in "condensed" view. Defaults to true.
 	 */
 	private boolean condenseShaderConfig = true;
+
+	/**
+	 * Whether to disable the entity rendering optimizations in Iris, may workaround memory leak issues at the expense of frames
+	 */
+	private boolean disableEntityRenderingOptimizations = false;
 
 	private Path propertiesPath;
 
@@ -119,6 +123,14 @@ public class IrisConfig {
 	}
 
 	/**
+	 * Gets whether to disable the entity rendering optimizations in Iris.
+	 * @return Whether to disable entity rendering optimizations or not
+	 */
+	public boolean shouldDisableEntityRenderingOptimizations() {
+		return disableEntityRenderingOptimizations;
+	}
+
+	/**
 	 * Returns the selected UI Theme
 	 *
 	 * @return The selected UI Theme, or the default theme if null
@@ -162,6 +174,17 @@ public class IrisConfig {
 		uiTheme = properties.getProperty("uiTheme", this.uiTheme);
 		condenseShaderConfig = Boolean.parseBoolean(properties.getProperty("condenseShaderConfig", String.valueOf(this.condenseShaderConfig)));
 
+		boolean disableEntityRenderingOptimizationsNew = Boolean.parseBoolean(properties.getProperty("disableEntityRenderingOptimizations", String.valueOf(this.disableEntityRenderingOptimizations)));
+
+		// Clear up any traces from buffered entity rendering if disabled, or reinitialize if re-enabled
+		if (disableEntityRenderingOptimizations != disableEntityRenderingOptimizationsNew) {
+			if (MinecraftClient.getInstance().getBufferBuilders() instanceof ExtendedBufferStorage) {
+				((ExtendedBufferStorage) MinecraftClient.getInstance().getBufferBuilders()).setEnabled(!disableEntityRenderingOptimizationsNew);
+			}
+		}
+
+		disableEntityRenderingOptimizations = disableEntityRenderingOptimizationsNew;
+
 		if (shaderPackName != null) {
 			if (shaderPackName.equals("(internal)") || shaderPackName.isEmpty()) {
 				shaderPackName = null;
@@ -181,6 +204,7 @@ public class IrisConfig {
 		properties.setProperty("enableShaders", Boolean.toString(areShadersEnabled()));
 		properties.setProperty("uiTheme", getUITheme().name());
 		properties.setProperty("condenseShaderConfig", Boolean.toString(getIfCondensedShaderConfig()));
+		properties.setProperty("disableEntityRenderingOptimizations", Boolean.toString(shouldDisableEntityRenderingOptimizations()));
 
 		return properties;
 	}
@@ -226,7 +250,8 @@ public class IrisConfig {
 		int textWidth = (int)(width * 0.6) - 18;
 		page.addAll(ImmutableList.of(
 				new StringOptionProperty(ImmutableList.of(UiTheme.IRIS.name(), UiTheme.VANILLA.name(), UiTheme.AQUA.name()), 0, widget, "uiTheme", GuiUtil.trimmed(tr, "property.iris.uiTheme", textWidth, true, true), false, false),
-				new BooleanOptionProperty(widget, true, "condenseShaderConfig", GuiUtil.trimmed(tr, "property.iris.condenseShaderConfig", textWidth, true, true), false)
+				new BooleanOptionProperty(widget, true, "condenseShaderConfig", GuiUtil.trimmed(tr, "property.iris.condenseShaderConfig", textWidth, true, true), false),
+				new BooleanOptionProperty(widget, false, "disableEntityRenderingOptimizations", GuiUtil.trimmed(tr, "property.iris.disableEntityRenderingOptimizations", textWidth, true, true), false)
 		));
 		document.put("main", page);
 		widget.onSave(() -> {
