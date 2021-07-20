@@ -1,6 +1,5 @@
 package net.coderbot.iris.mixin.fantastic;
 
-import net.coderbot.iris.Iris;
 import net.coderbot.iris.fantastic.ExtendedBufferStorage;
 import net.coderbot.iris.fantastic.FlushableVertexConsumerProvider;
 import net.coderbot.iris.fantastic.ParticleRenderingPhase;
@@ -59,9 +58,7 @@ public class MixinWorldRenderer {
 
 	@Inject(method = "render", at = @At("HEAD"))
 	private void iris$fantastic$beginWorldRender(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo callback) {
-		if (!Iris.getIrisConfig().shouldDisableEntityRenderingOptimizations()) {
-			((ExtendedBufferStorage) bufferBuilders).beginWorldRendering();
-		}
+		((ExtendedBufferStorage) bufferBuilders).beginWorldRendering();
 	}
 
 	@Inject(method = "render", at = @At(value = "INVOKE", target = "net/minecraft/client/render/RenderLayer.getTranslucent ()Lnet/minecraft/client/render/RenderLayer;"))
@@ -77,8 +74,6 @@ public class MixinWorldRenderer {
 
 	@Inject(method = "render", at = @At("RETURN"))
 	private void iris$fantastic$endWorldRender(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo callback) {
-		if (!Iris.getIrisConfig().shouldDisableEntityRenderingOptimizations()) {
-			((ExtendedBufferStorage) bufferBuilders).endWorldRendering();
-		}
+		((ExtendedBufferStorage) bufferBuilders).endWorldRendering();
 	}
 }
