@@ -32,16 +32,20 @@
     "mixins.iris.yeetphysicsmod.json",
     "mixins.iris.fantastic.json",
     "mixins.iris.vertexformat.json",
-    "mixins.iris.bettermipmaps.json"
+    "mixins.iris.bettermipmaps.json",
+    "mixins.iris.compat.indigo.json",
+    "mixins.iris.compat.indium.json"
   ],
 
-    "depends": {
-        "fabricloader": ">=0.7.4",
-        "minecraft": "1.16.x",
-        "fabric-resource-loader-v0": ">=0.3.2",
-        "fabric-key-binding-api-v1": ">=1.0.1",
-        "fabric-lifecycle-events-v1": ">=1.2.0"
-    },
+  "accessWidener" : "iris.accesswidener",
+
+  "depends": {
+    "fabricloader": ">=0.7.4",
+    "minecraft": "1.16.x",
+    "fabric-resource-loader-v0": ">=0.3.2",
+    "fabric-key-binding-api-v1": ">=1.0.1",
+    "fabric-lifecycle-events-v1": ">=1.2.0"
+  },
 
   "breaks": {
     "canvas": "*",

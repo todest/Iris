@@ -379,7 +379,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		if (program == GbufferProgram.NONE) {
 			// Note that we don't unbind the framebuffer here. Uses of GbufferProgram.NONE
 			// are responsible for ensuring that the framebuffer is switched properly.
-			GlProgramManager.useProgram(0);
+			Program.unbind();
 			return;
 		} else if (program == GbufferProgram.CLEAR) {
 			// Ensure that Minecraft's main framebuffer is cleared, or else very odd issues will happen with shaders
@@ -390,7 +390,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 			// horizon rendered by HorizonRenderer ensures that shaderpacks that don't override the sky rendering don't
 			// have issues, and this also gives shaderpacks more control over sky rendering in general.
 			MinecraftClient.getInstance().getFramebuffer().beginWrite(true);
-			GlProgramManager.useProgram(0);
+			Program.unbind();
 
 			return;
 		}
@@ -419,7 +419,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 	}
 
 	private void teardownProgram() {
-		GlProgramManager.useProgram(0);
+		Program.unbind();
 		this.baseline.bind();
 	}
 
@@ -449,7 +449,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		if (pass != null) {
 			pass.use();
 		} else {
-			GlProgramManager.useProgram(0);
+			Program.unbind();
 			this.baseline.bind();
 		}
 	}
@@ -656,6 +656,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		GlStateManager.bindTexture(0);
 
 		deferredRenderer.renderAll();
+		Program.unbind();
 
 		RenderSystem.enableBlend();
 		RenderSystem.enableAlphaTest();

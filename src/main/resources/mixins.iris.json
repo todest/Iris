@@ -11,9 +11,11 @@
     "MixinGlStateManager",
     "MixinHeldItemRenderer",
     "MixinImmediateVertexConsumerProvider",
+    "MixinLivingEntityRenderer",
     "MixinModelViewBobbing",
     "MixinParticleManager",
     "MixinSpriteAtlasTexture",
+    "MixinTntMinecartEntityRenderer",
     "MixinTranslationStorage",
     "MixinTweakFarPlane",
     "MixinWorldRenderer",
@@ -34,7 +36,10 @@
     "texunits.MixinGlStateManager",
     "texunits.MixinLightmapTextureManager",
     "texunits.MixinOverlayTexture",
-    "texunits.MixinVertexFormats"
+    "texunits.MixinVertexFormats",
+    "statelisteners.CapabilityTrackerAccessor",
+    "statelisteners.GlStateManagerAccessor",
+    "statelisteners.MixinGlStateManager"
   ],
   "injectors": {
     "defaultRequire": 1

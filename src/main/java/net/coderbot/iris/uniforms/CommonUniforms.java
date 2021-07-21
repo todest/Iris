@@ -3,8 +3,9 @@ package net.coderbot.iris.uniforms;
 import java.util.Objects;
 import java.util.function.IntSupplier;
 
-import net.coderbot.iris.gl.uniform.LocationalUniformHolder;
+import net.coderbot.iris.gl.uniform.DynamicUniformHolder;
 import net.coderbot.iris.gl.uniform.UniformHolder;
+import net.coderbot.iris.layer.EntityColorRenderPhase;
 import net.coderbot.iris.shaderpack.IdMap;
 import net.coderbot.iris.shaderpack.PackDirectives;
 import net.coderbot.iris.texunits.SpriteAtlasTextureInterface;
@@ -15,6 +16,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.texture.SpriteAtlasTexture;
+import net.minecraft.client.util.math.Vector4f;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
@@ -41,7 +43,7 @@ public final class CommonUniforms {
 	}
 
 	// Needs to use a LocationalUniformHolder as we need it for the common uniforms
-	public static void addCommonUniforms(LocationalUniformHolder uniforms, IdMap idMap, PackDirectives directives, FrameUpdateNotifier updateNotifier) {
+	public static void addCommonUniforms(DynamicUniformHolder uniforms, IdMap idMap, PackDirectives directives, FrameUpdateNotifier updateNotifier) {
 		CameraUniforms.addCameraUniforms(uniforms, updateNotifier);
 		ViewportUniforms.addViewportUniforms(uniforms);
 		WorldTimeUniforms.addWorldTimeUniforms(uniforms);
@@ -50,6 +52,21 @@ public final class CommonUniforms {
 		IdMapUniforms.addIdMapUniforms(uniforms, idMap);
 		MatrixUniforms.addMatrixUniforms(uniforms, directives);
 		HardcodedCustomUniforms.addHardcodedCustomUniforms(uniforms, updateNotifier);
+		FogUniforms.addFogUniforms(uniforms);
+
+		uniforms.uniform4f("entityColor", () -> {
+			if (EntityColorRenderPhase.currentHurt) {
+				return new Vector4f(1.0f, 0.0f, 0.0f, 0.3f);
+			}
+
+			float shade = EntityColorRenderPhase.currentWhiteFlash;
+
+			if (shade != 0.0f) {
+				return new Vector4f(shade, shade, shade, 0.5f);
+			}
+
+			return new Vector4f(0.0f, 0.0f, 0.0f, 0.0f);
+		}, EntityColorRenderPhase.getUpdateNotifier());
 
 		CommonUniforms.generalCommonUniforms(uniforms, updateNotifier);
 	}
@@ -69,7 +86,7 @@ public final class CommonUniforms {
       		// TODO: Parse the value of const float eyeBrightnessHalflife from the shaderpack's fragment shader configuration
 			.uniform2i(PER_FRAME, "eyeBrightnessSmooth", new SmoothedVec2f(10.0f, CommonUniforms::getEyeBrightness, updateNotifier))
 			.uniform1f(PER_TICK, "rainStrength", CommonUniforms::getRainStrength)
-		  	.uniform1f(PER_TICK, "wetness", new SmoothedFloat(600f, CommonUniforms::getRainStrength, updateNotifier))
+			.uniform1f(PER_TICK, "wetness", new SmoothedFloat(600f, CommonUniforms::getRainStrength, updateNotifier))
 			.uniform3d(PER_FRAME, "skyColor", CommonUniforms::getSkyColor)
 			.uniform3d(PER_FRAME, "fogColor", CapturedRenderingState.INSTANCE::getFogColor)
 			.uniform2i(ONCE, "atlasSize", CommonUniforms::getAtlasSize);
