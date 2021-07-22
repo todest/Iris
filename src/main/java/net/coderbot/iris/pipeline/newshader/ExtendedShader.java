@@ -27,7 +27,7 @@ public class ExtendedShader extends Shader implements SamplerHolder {
 	GlFramebuffer baseline;
 	HashMap<String, IntSupplier> dynamicSamplers;
 
-	public ExtendedShader(ResourceFactory resourceFactory, String string, VertexFormat vertexFormat, GlFramebuffer writingToBeforeTranslucent, GlFramebuffer writingToAfterTranslucent, GlFramebuffer baseline, Consumer<LocationalUniformHolder> uniformCreator, NewWorldRenderingPipeline parent) throws IOException {
+	public ExtendedShader(ResourceFactory resourceFactory, String string, VertexFormat vertexFormat, GlFramebuffer writingToBeforeTranslucent, GlFramebuffer writingToAfterTranslucent, GlFramebuffer baseline, Consumer<ProgramUniforms.Builder> uniformCreator, NewWorldRenderingPipeline parent) throws IOException {
 		super(resourceFactory, string, vertexFormat);
 
 		int programId = this.getProgramRef();
@@ -45,6 +45,7 @@ public class ExtendedShader extends Shader implements SamplerHolder {
 
 	@Override
 	public void unbind() {
+		ProgramUniforms.clearActiveUniforms();
 		super.unbind();
 
 		MinecraftClient.getInstance().getFramebuffer().beginWrite(false);
@@ -80,8 +81,6 @@ public class ExtendedShader extends Shader implements SamplerHolder {
 
 			// "tex" is also a valid sampler name.
 			super.addSampler("tex", sampler);
-		} else if (name.equals("Sampler1")) {
-			name = "overlay";
 		} else if (name.equals("Sampler2")) {
 			name = "lightmap";
 		} else if (name.startsWith("Sampler")) {
@@ -92,6 +91,8 @@ public class ExtendedShader extends Shader implements SamplerHolder {
 			Iris.logger.warn("Iris: didn't recognize the sampler name " + name + " in addSampler, please use addIrisSampler for custom Iris-specific samplers instead.");
 			return;
 		}
+
+		// TODO: Expose Sampler1 (the mob overlay flash)
 
 		super.addSampler(name, sampler);
 	}

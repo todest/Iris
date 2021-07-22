@@ -51,16 +51,15 @@ public class NewShaderTests {
 				"        \"Position\",\n" +
 				"        \"Color\",\n" +
 				"        \"UV0\",\n" +
-				"        \"UV1\",\n" +
 				"        \"UV2\",\n" +
 				"        \"Normal\"\n" +
 				"    ],\n" +
 				"    \"samplers\": [\n" +
 				// TODO: Don't duplicate these definitions!
 				"        { \"name\": \"texture\" },\n" +
+				"        { \"name\": \"gtexture\" },\n" +
 				"        { \"name\": \"tex\" },\n" +
 				"        { \"name\": \"lightmap\" },\n" +
-				"        { \"name\": \"overlay\" },\n" +
 				"        { \"name\": \"normals\" },\n" +
 				"        { \"name\": \"specular\" },\n" +
 				"        { \"name\": \"shadow\" },\n" +

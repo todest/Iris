@@ -1,7 +1,7 @@
 package net.coderbot.iris.mixin.fantastic;
 
 import net.coderbot.iris.fantastic.ExtendedBufferStorage;
-import net.coderbot.iris.fantastic.FantasticVertexConsumerProvider;
+import net.coderbot.iris.fantastic.FullyBufferedVertexConsumerProvider;
 import net.minecraft.client.render.BufferBuilderStorage;
 import net.minecraft.client.render.OutlineVertexConsumerProvider;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(BufferBuilderStorage.class)
 public class MixinBufferBuilderStorage implements ExtendedBufferStorage {
 	@Unique
-	private final VertexConsumerProvider.Immediate buffered = new FantasticVertexConsumerProvider();
+	private final VertexConsumerProvider.Immediate buffered = new FullyBufferedVertexConsumerProvider();
 
 	@Unique
 	private int begins = 0;
@@ -28,6 +28,22 @@ public class MixinBufferBuilderStorage implements ExtendedBufferStorage {
 			return;
 		}
 
+		provider.setReturnValue(buffered);
+	}
+
+	@Inject(method = "getEffectVertexConsumers", at = @At("HEAD"), cancellable = true)
+	private void iris$replaceEffectVertexConsumers(CallbackInfoReturnable<VertexConsumerProvider.Immediate> provider) {
+		if (begins == 0) {
+			return;
+		}
+
+		// NB: We can return the same VertexConsumerProvider here as long as the block entity and its breaking animation
+		// use different render layers. This seems like a sound assumption to make. This only works with our fully
+		// buffered vertex consumer provider - vanilla's Immediate cannot be used here since it would try to return the
+		// same buffer for the block entity and its breaking animation in many cases.
+		//
+		// If anything goes wrong here, Vanilla *will* catch the "duplicate delegates" error, so
+		// this shouldn't cause silent bugs.
 		provider.setReturnValue(buffered);
 	}
 
