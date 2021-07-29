@@ -3,12 +3,16 @@ package net.coderbot.iris.mixin;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.coderbot.iris.HorizonRenderer;
 import net.coderbot.iris.Iris;
-import net.coderbot.iris.fantastic.FlushableVertexConsumerProvider;
+import net.coderbot.iris.fantastic.WrappingVertexConsumerProvider;
 import net.coderbot.iris.gl.program.Program;
 import net.coderbot.iris.layer.GbufferProgram;
 import net.coderbot.iris.layer.GbufferPrograms;
 import net.coderbot.iris.pipeline.ShadowRenderer;
 import net.coderbot.iris.pipeline.DeferredWorldRenderingPipeline;
+import net.coderbot.iris.layer.IsBlockEntityRenderPhase;
+import net.coderbot.iris.layer.IsEntityRenderPhase;
+import net.coderbot.iris.layer.InnerWrappedRenderLayer;
+import net.coderbot.iris.layer.OuterWrappedRenderLayer;
 import net.coderbot.iris.pipeline.WorldRenderingPipeline;
 import net.coderbot.iris.pipeline.newshader.CoreWorldRenderingPipeline;
 import net.coderbot.iris.pipeline.newshader.WorldRenderingPhase;
@@ -16,6 +20,7 @@ import net.coderbot.iris.uniforms.CapturedRenderingState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.render.*;
+import net.minecraft.util.math.Vec3f;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -40,9 +45,6 @@ import net.fabricmc.api.Environment;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +76,10 @@ public class MixinWorldRenderer {
 	@Unique
 	private WorldRenderingPipeline pipeline;
 
+	@Shadow
+	@Final
+	private BufferBuilderStorage bufferBuilders;
+
 	@Inject(method = RENDER, at = @At("HEAD"))
 	private void iris$beginWorldRender(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo callback) {
 		CapturedRenderingState.INSTANCE.setGbufferModelView(matrices.peek().getModel());
@@ -88,8 +94,9 @@ public class MixinWorldRenderer {
 		pipeline.setPhase(WorldRenderingPhase.OTHER);
 	}
 
-	// Inject a bit early so that we can end our rendering in time.
-	@Inject(method = RENDER, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/BackgroundRenderer;method_23792()V"))
+	// Inject a bit early so that we can end our rendering before mods like VoxelMap (which inject at RETURN)
+	// render their waypoint beams.
+	@Inject(method = RENDER, at = @At(value = "RETURN", shift = At.Shift.BEFORE))
 	private void iris$endWorldRender(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo callback) {
 		MinecraftClient.getInstance().getProfiler().swap("iris_final");
 		pipeline.finalizeWorldRendering();
@@ -225,6 +232,35 @@ public class MixinWorldRenderer {
 		pipeline.popProgram(GbufferProgram.TEXTURED_LIT);
 	}*/
 
+	@Inject(method = RENDER, at = @At(value = "INVOKE_STRING", target = PROFILER_SWAP, args = "ldc=entities", shift = At.Shift.AFTER))
+	private void iris$beginEntities(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo callback) {
+		VertexConsumerProvider provider = bufferBuilders.getEntityVertexConsumers();
+
+		if (provider instanceof WrappingVertexConsumerProvider) {
+			((WrappingVertexConsumerProvider) provider).setWrappingFunction(layer ->
+				new OuterWrappedRenderLayer("iris:is_entity", layer, IsEntityRenderPhase.INSTANCE));
+		}
+	}
+
+	@Inject(method = RENDER, at = @At(value = "INVOKE_STRING", target = PROFILER_SWAP, args = "ldc=blockentities", shift = At.Shift.AFTER))
+	private void iris$beginBlockEntities(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo callback) {
+		VertexConsumerProvider provider = bufferBuilders.getEntityVertexConsumers();
+
+		if (provider instanceof WrappingVertexConsumerProvider) {
+			((WrappingVertexConsumerProvider) provider).setWrappingFunction(layer ->
+					new OuterWrappedRenderLayer("iris:is_block_entity", layer, IsBlockEntityRenderPhase.INSTANCE));
+		}
+	}
+
+	@Inject(method = RENDER, at = @At(value = "INVOKE_STRING", target = PROFILER_SWAP, args = "ldc=destroyProgress"))
+	private void iris$endBlockEntities(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo callback) {
+		VertexConsumerProvider provider = bufferBuilders.getEntityVertexConsumers();
+
+		if (provider instanceof WrappingVertexConsumerProvider) {
+			((WrappingVertexConsumerProvider) provider).setWrappingFunction(null);
+		}
+	}
+
 	// TODO: Need to figure out how to properly track these values (https://github.com/IrisShaders/Iris/issues/19)
 	/*@Inject(method = "renderEntity", at = @At("HEAD"))
 	private void iris$beginEntity(Entity entity, double cameraX, double cameraY, double cameraZ, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, CallbackInfo ci) {
@@ -265,15 +301,5 @@ public class MixinWorldRenderer {
 		sortedEntities.values().forEach(entities::addAll);
 
 		return entities;
-	}
-
-	@Inject(method = RENDER, at = @At(value = "CONSTANT", args = "stringValue=blockentities"))
-	private void iris$startBlockEntities(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo ci) {
-		pipeline.setPhase(WorldRenderingPhase.BLOCK_ENTITIES);
-	}
-
-	@Inject(method = RENDER, at = @At(value = "CONSTANT", args = "stringValue=destroyProgress"))
-	private void iris$endBlockEntities(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo ci) {
-		pipeline.setPhase(WorldRenderingPhase.OTHER);
 	}
 }
