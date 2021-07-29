@@ -12,6 +12,7 @@
     "MixinGlStateManager",
     "MixinHeldItemRenderer",
     "MixinImmediateVertexConsumerProvider",
+    "MixinImmediateVertexConsumerProvider_WrapperManager",
     "MixinLivingEntityRenderer",
     "MixinModelViewBobbing",
     "MixinShader",
@@ -42,7 +43,8 @@
     "texunits.MixinVertexFormats",
     "statelisteners.CapabilityTrackerAccessor",
     "statelisteners.GlStateManagerAccessor",
-    "statelisteners.MixinGlStateManager"
+    "statelisteners.MixinGlStateManager",
+    "DimensionTypeAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

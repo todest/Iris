@@ -11,18 +11,18 @@ archivesBaseName = project.archives_base_name
 version = "${project.mod_version}+${getVersionMetadata()}"
 group = project.maven_group
 
-repositories {
-	maven {
-		url "https://maven.quiltmc.org/repository/release/"
-	}
-}
-
 loom {
 	customManifest = "https://gist.githubusercontent.com/modmuss50/6e00baf80dcbaa42f3a2fc846b290128/raw/f035ef8f75164f56ec6352809a34841d326bae1c/1_18_experimental-snapshot-1.json"
 }
 
 minecraft {
 	accessWidener = file("src/main/resources/iris.accesswidener")
+}
+
+repositories {
+	maven {
+		url "https://maven.quiltmc.org/repository/release/"
+	}
 }
 
 dependencies {
@@ -82,6 +82,7 @@ sourceSets {
 		java {
 			compileClasspath += main.compileClasspath
 		}
+		messages.add(3,
 	}
 
 	main {
