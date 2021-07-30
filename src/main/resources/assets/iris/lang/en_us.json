@@ -21,6 +21,7 @@
   "property.iris.title.configScreen": "Configure Iris",
   "property.iris.uiTheme": "UI Theme",
   "property.iris.condenseShaderConfig": "Condense Shader Pack Config",
+  "property.iris.scrollSpeed": "Scroll Speed",
 
   "tooltip.iris.config": "Configure Iris",
 

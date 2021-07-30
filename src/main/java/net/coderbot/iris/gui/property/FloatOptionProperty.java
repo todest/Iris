@@ -31,7 +31,8 @@ public class FloatOptionProperty extends OptionProperty<Float> {
         this.valueText = null;
         try {
             this.setValue(Float.parseFloat(value));
-        } catch (NumberFormatException ignored) { return; }
-        this.index = defaultIndex;
+        } catch (NumberFormatException ignored) {
+            this.index = defaultIndex;
+        }
     }
 }
