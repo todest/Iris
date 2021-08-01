@@ -164,7 +164,7 @@ public class MixinGameRenderer {
 		if (ShadowRenderer.ACTIVE) {
 			// TODO: Wrong program
 			override(CoreWorldRenderingPipeline::getShadowEntitiesCutout, cir);
-		} else if (GbufferPrograms.isRenderingBlockEntities()) {
+		} else if (isPhase(WorldRenderingPhase.BLOCK_ENTITIES)) {
 			override(CoreWorldRenderingPipeline::getBlock, cir);
 		} else if (isRenderingWorld()) {
 			override(CoreWorldRenderingPipeline::getEntitiesCutout, cir);
@@ -196,7 +196,7 @@ public class MixinGameRenderer {
 		if (ShadowRenderer.ACTIVE) {
 			// TODO: Wrong program
 			override(CoreWorldRenderingPipeline::getShadowEntitiesCutout, cir);
-		} else if (GbufferPrograms.isRenderingBlockEntities()) {
+		} else if (isPhase(WorldRenderingPhase.BLOCK_ENTITIES)) {
 			override(CoreWorldRenderingPipeline::getBlock, cir);
 		} else if (isRenderingWorld()) {
 			override(CoreWorldRenderingPipeline::getEntitiesSolid, cir);
@@ -210,7 +210,7 @@ public class MixinGameRenderer {
 		if (ShadowRenderer.ACTIVE) {
 			// TODO: Wrong program
 			override(CoreWorldRenderingPipeline::getShadowEntitiesCutout, cir);
-		} else if (GbufferPrograms.isRenderingBlockEntities()) {
+		} else if (isPhase(WorldRenderingPhase.BLOCK_ENTITIES)) {
 			override(CoreWorldRenderingPipeline::getBlock, cir);
 		} else if (isRenderingWorld()) {
 			override(CoreWorldRenderingPipeline::getEntitiesEyes, cir);
