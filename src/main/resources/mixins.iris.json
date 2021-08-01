@@ -12,7 +12,6 @@
     "MixinGlStateManager",
     "MixinHeldItemRenderer",
     "MixinImmediateVertexConsumerProvider",
-    "MixinImmediateVertexConsumerProvider_WrapperManager",
     "MixinLivingEntityRenderer",
     "MixinModelViewBobbing",
     "MixinShader",
