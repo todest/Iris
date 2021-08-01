@@ -37,14 +37,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 @Mixin(WorldRenderer.class)
 @Environment(EnvType.CLIENT)
 public class MixinWorldRenderer {
@@ -247,22 +239,5 @@ public class MixinWorldRenderer {
 
 		profiler.swap("iris_pre_translucent");
 		pipeline.beginTranslucents();
-	}
-
-	@Redirect(method = RENDER, at = @At(value = "INVOKE", target = "net/minecraft/client/world/ClientWorld.getEntities ()Ljava/lang/Iterable;"))
-	private Iterable<Entity> iris$sortEntityList(ClientWorld world) {
-		// Sort the entity list first in order to allow vanilla's entity batching code to work better.
-		Iterable<Entity> entityIterable = world.getEntities();
-
-		Map<EntityType<?>, List<Entity>> sortedEntities = new HashMap<>();
-
-		List<Entity> entities = new ArrayList<>();
-		entityIterable.forEach(entity -> {
-			sortedEntities.computeIfAbsent(entity.getType(), entityType -> new ArrayList<>(32)).add(entity);
-		});
-
-		sortedEntities.values().forEach(entities::addAll);
-
-		return entities;
 	}
 }

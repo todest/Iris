@@ -1,50 +1,60 @@
 package net.coderbot.iris.mixin.fantastic;
 
 import net.coderbot.iris.fantastic.ExtendedBufferStorage;
-import net.coderbot.iris.layer.EntityColorRenderPhase;
-import net.coderbot.iris.layer.EntityColorWrappedRenderLayer;
-import net.minecraft.client.render.BufferBuilder;
+import net.coderbot.iris.fantastic.FullyBufferedVertexConsumerProvider;
 import net.minecraft.client.render.BufferBuilderStorage;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.util.Identifier;
-import org.spongepowered.asm.mixin.Final;
+import net.minecraft.client.render.OutlineVertexConsumerProvider;
+import net.minecraft.client.render.VertexConsumerProvider;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.SortedMap;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(BufferBuilderStorage.class)
 public class MixinBufferBuilderStorage implements ExtendedBufferStorage {
-	@Shadow
-	@Final
-	private SortedMap<RenderLayer, BufferBuilder> entityBuilders;
-
 	@Unique
-	private static void iris$assignBufferBuilder(SortedMap<RenderLayer, BufferBuilder> builderStorage, RenderLayer layer) {
-		builderStorage.put(layer, new BufferBuilder(layer.getExpectedBufferSize()));
-	}
-
-	@Inject(method = "<init>()V", at = @At("RETURN"))
-	private void iris$onInit(CallbackInfo ci) {
-		// Add a few render layers to the list of specially-buffered layers in order to improve batching in some
-		// common survival scenes.
-
-		// Special-case for enderman eyes and spider eyes since they're so common.
-		iris$assignBufferBuilder(entityBuilders, RenderLayer.getEyes(new Identifier("textures/entity/enderman/enderman_eyes.png")));
-		iris$assignBufferBuilder(entityBuilders, RenderLayer.getEyes(new Identifier("textures/entity/enderman/spider_eyes.png")));
-
-		// Similar deal with wool on sheeps.
-		iris$assignBufferBuilder(entityBuilders, RenderLayer.getEntityCutoutNoCull(new Identifier("textures/entity/sheep/sheep_fur.png")));
-	}
+	private final VertexConsumerProvider.Immediate buffered = new FullyBufferedVertexConsumerProvider();
 
 	@Unique
 	private int begins = 0;
+
+	@Unique
+	private final OutlineVertexConsumerProvider outlineVertexConsumers = new OutlineVertexConsumerProvider(buffered);
+
+	@Inject(method = "getEntityVertexConsumers", at = @At("HEAD"), cancellable = true)
+	private void iris$replaceEntityVertexConsumers(CallbackInfoReturnable<VertexConsumerProvider.Immediate> provider) {
+		if (begins == 0) {
+			return;
+		}
+
+		provider.setReturnValue(buffered);
+	}
+
+	@Inject(method = "getEffectVertexConsumers", at = @At("HEAD"), cancellable = true)
+	private void iris$replaceEffectVertexConsumers(CallbackInfoReturnable<VertexConsumerProvider.Immediate> provider) {
+		if (begins == 0) {
+			return;
+		}
+
+		// NB: We can return the same VertexConsumerProvider here as long as the block entity and its breaking animation
+		// use different render layers. This seems like a sound assumption to make. This only works with our fully
+		// buffered vertex consumer provider - vanilla's Immediate cannot be used here since it would try to return the
+		// same buffer for the block entity and its breaking animation in many cases.
+		//
+		// If anything goes wrong here, Vanilla *will* catch the "duplicate delegates" error, so
+		// this shouldn't cause silent bugs.
+		provider.setReturnValue(buffered);
+	}
+
+	@Inject(method = "getOutlineVertexConsumers", at = @At("HEAD"), cancellable = true)
+	private void iris$replaceOutlineVertexConsumers(CallbackInfoReturnable<OutlineVertexConsumerProvider> provider) {
+		if (begins == 0) {
+			return;
+		}
+
+		provider.setReturnValue(outlineVertexConsumers);
+	}
 
 	@Override
 	public void beginWorldRendering() {
