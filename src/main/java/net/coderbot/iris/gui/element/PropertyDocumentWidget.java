@@ -131,6 +131,7 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
             	profiles.add(s);
 			}
         }
+        Map<String, OptionProperty<?>> sharedOptionProperties = new HashMap<>();
         for (String s : shaderProperties.stringPropertyNames()) {
             if (s.startsWith("screen.") || s.equals("screen")) {
                 PropertyList page = new PropertyList();
@@ -158,12 +159,27 @@ public class PropertyDocumentWidget extends ShaderScreenEntryListWidget<Property
 						boolean hasTranslation = I18n.hasTranslation("option." + p);
 						if (intOption != null) {
 							List<Integer> vals = intOption.getAllowedValues();
-							page.add(new IntOptionProperty(vals, vals.indexOf(intOption.getDefaultValue()), widget, p, GuiUtil.trimmed(tr, (hasTranslation ? "option." : "") + p, tw, hasTranslation, true), sliderOptions.contains(p)));
+							IntOptionProperty intOptionProperty = (IntOptionProperty) sharedOptionProperties.get(p);
+							if (intOptionProperty == null) {
+								intOptionProperty = new IntOptionProperty(vals, vals.indexOf(intOption.getDefaultValue()), widget, p, GuiUtil.trimmed(tr, (hasTranslation ? "option." : "") + p, tw, hasTranslation, true), sliderOptions.contains(p));
+								sharedOptionProperties.put(p, intOptionProperty);
+							}
+							page.add(intOptionProperty);
 						} else if (floatOption != null) {
 							List<Float> vals = floatOption.getAllowedValues();
-							page.add(new FloatOptionProperty(vals, vals.indexOf(floatOption.getDefaultValue()), widget, p, GuiUtil.trimmed(tr, (hasTranslation ? "option." : "") + p, tw, hasTranslation, true), sliderOptions.contains(p)));
+							FloatOptionProperty floatOptionProperty = (FloatOptionProperty) sharedOptionProperties.get(p);
+							if (floatOptionProperty == null) {
+								floatOptionProperty = new FloatOptionProperty(vals, vals.indexOf(floatOption.getDefaultValue()), widget, p, GuiUtil.trimmed(tr, (hasTranslation ? "option." : "") + p, tw, hasTranslation, true), sliderOptions.contains(p));
+								sharedOptionProperties.put(p, floatOptionProperty);
+							}
+							page.add(floatOptionProperty);
 						} else if (boolOption != null) {
-							page.add(new BooleanOptionProperty(widget, boolOption.getDefaultValue(), p, GuiUtil.trimmed(tr, (hasTranslation ? "option." : "") + p, tw, hasTranslation, true), sliderOptions.contains(p)));
+							BooleanOptionProperty booleanOptionProperty = (BooleanOptionProperty) sharedOptionProperties.get(p);
+							if (booleanOptionProperty == null) {
+								booleanOptionProperty = new BooleanOptionProperty(widget, boolOption.getDefaultValue(), p, GuiUtil.trimmed(tr, (hasTranslation ? "option." : "") + p, tw, hasTranslation, true), sliderOptions.contains(p));
+								sharedOptionProperties.put(p, booleanOptionProperty);
+							}
+							page.add(booleanOptionProperty);
 						} else {
 							page.add(new Property(GuiUtil.trimmed(tr, (hasTranslation ? "option." : "") + p, tw, hasTranslation, true)));
 						}
