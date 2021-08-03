@@ -1,5 +1,6 @@
 package net.coderbot.iris.gui.element;
 
+import net.coderbot.iris.Iris;
 import net.coderbot.iris.gui.GuiUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Element;
@@ -54,5 +55,11 @@ public abstract class ShaderScreenEntryListWidget<E extends AlwaysSelectedEntryL
         super.render(matrices, mouseX, mouseY, delta);
         GuiUtil.drawCompactScrollBar(this.left + this.width + getScrollbarXOffset(), this.top + getScrollbarTopMargin(), this.bottom - getScrollbarBottomMargin(), this.getMaxScroll(), this.getScrollAmount(), this.getMaxPosition(), Math.max(0, Math.min(3, this.scrollbarFade + (hovered ? delta : -delta))) / 3);
         this.hovered = this.isMouseOver(mouseX, mouseY);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+        this.setScrollAmount(this.getScrollAmount() - amount * (double)this.itemHeight / 2.0D * (Iris.getIrisConfig().getScrollSpeed() / 100D));
+        return true;
     }
 }

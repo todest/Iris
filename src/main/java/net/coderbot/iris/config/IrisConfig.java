@@ -22,7 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * A class dedicated to storing the config values of shaderpacks.
@@ -50,6 +51,11 @@ public class IrisConfig {
 	 * Whether to display shader pack config screens in "condensed" view. Defaults to true.
 	 */
 	private boolean condenseShaderConfig = true;
+
+	/**
+	 * The scroll speed for the shaderpack menu
+	 */
+	private int scrollSpeed = 100;
 
 	private Path propertiesPath;
 
@@ -135,6 +141,10 @@ public class IrisConfig {
 		return theme;
 	}
 
+	public int getScrollSpeed() {
+		return this.scrollSpeed;
+	}
+
 	/**
 	 * Determines whether or not shaders are used for rendering.
 	 *
@@ -161,6 +171,7 @@ public class IrisConfig {
 		enableShaders = Boolean.parseBoolean(properties.getProperty("enableShaders", String.valueOf(this.enableShaders)));
 		uiTheme = properties.getProperty("uiTheme", this.uiTheme);
 		condenseShaderConfig = Boolean.parseBoolean(properties.getProperty("condenseShaderConfig", String.valueOf(this.condenseShaderConfig)));
+		scrollSpeed = Integer.parseInt(properties.getProperty("scrollSpeed", String.valueOf(this.scrollSpeed)));
 
 		if (shaderPackName != null) {
 			if (shaderPackName.equals("(internal)") || shaderPackName.isEmpty()) {
@@ -181,6 +192,7 @@ public class IrisConfig {
 		properties.setProperty("enableShaders", Boolean.toString(areShadersEnabled()));
 		properties.setProperty("uiTheme", getUITheme().name());
 		properties.setProperty("condenseShaderConfig", Boolean.toString(getIfCondensedShaderConfig()));
+		properties.setProperty("scrollSpeed", Integer.toString(getScrollSpeed()));
 
 		return properties;
 	}
@@ -226,7 +238,8 @@ public class IrisConfig {
 		int textWidth = (int)(width * 0.6) - 18;
 		page.addAll(ImmutableList.of(
 				new StringOptionProperty(ImmutableList.of(UiTheme.IRIS.name(), UiTheme.VANILLA.name(), UiTheme.AQUA.name()), 0, widget, "uiTheme", GuiUtil.trimmed(tr, "property.iris.uiTheme", textWidth, true, true), false, false),
-				new BooleanOptionProperty(widget, true, "condenseShaderConfig", GuiUtil.trimmed(tr, "property.iris.condenseShaderConfig", textWidth, true, true), false)
+				new BooleanOptionProperty(widget, true, "condenseShaderConfig", GuiUtil.trimmed(tr, "property.iris.condenseShaderConfig", textWidth, true, true), false),
+				new IntOptionProperty(IntStream.rangeClosed(0, 200).boxed().collect(Collectors.toList()), 100, widget, "scrollSpeed", GuiUtil.trimmed(tr, "property.iris.scrollSpeed", textWidth, true, true), true)
 		));
 		document.put("main", page);
 		widget.onSave(() -> {

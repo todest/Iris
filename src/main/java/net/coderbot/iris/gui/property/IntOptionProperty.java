@@ -31,7 +31,8 @@ public class IntOptionProperty extends OptionProperty<Integer> {
         this.valueText = null;
         try {
             this.setValue(Integer.parseInt(value));
-        } catch (NumberFormatException ignored) { return; }
-        this.index = defaultIndex;
+        } catch (NumberFormatException ignored) {
+            this.index = defaultIndex;
+        }
     }
 }
