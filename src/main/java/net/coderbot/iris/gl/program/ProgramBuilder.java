@@ -27,8 +27,6 @@ public class ProgramBuilder extends ProgramUniforms.Builder implements SamplerHo
 		.defineAll(StandardMacros.getGlExtensions())
 		.build();
 
-
-
 	private final int program;
 	private ProgramSamplers.Builder samplers;
 
