@@ -5,6 +5,7 @@
   "plugin": "net.coderbot.iris.mixin.shadows.IrisShadowsMixinPlugin",
   "compatibilityLevel": "JAVA_8",
   "client": [
+    "MixinAbstractBlockState",
     "MixinBackgroundRenderer",
     "MixinDebugHud",
     "MixinEndPortalBlockEntityRenderer",
@@ -15,7 +16,6 @@
     "MixinGlUniform",
     "MixinHeldItemRenderer",
     "MixinImmediateVertexConsumerProvider",
-    "MixinImmediateVertexConsumerProvider_WrapperManager",
     "MixinLivingEntityRenderer",
     "MixinMinecraftClient",
     "MixinModelViewBobbing",
