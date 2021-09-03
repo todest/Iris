@@ -24,7 +24,6 @@ import net.coderbot.iris.postprocess.FinalPassRenderer;
 import net.coderbot.iris.rendertarget.NativeImageBackedCustomTexture;
 import net.coderbot.iris.rendertarget.NativeImageBackedNoiseTexture;
 import net.coderbot.iris.rendertarget.NativeImageBackedSingleColorTexture;
-import net.coderbot.iris.rendertarget.RenderTarget;
 import net.coderbot.iris.rendertarget.RenderTargets;
 import net.coderbot.iris.samplers.IrisSamplers;
 import net.coderbot.iris.shaderpack.ProgramSet;
@@ -44,7 +43,6 @@ import org.lwjgl.opengl.GL20C;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.gl.GlProgramManager;
 import net.minecraft.client.particle.ParticleTextureSheet;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
@@ -116,6 +114,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 	private final int waterId;
 	private final float sunPathRotation;
 	private final boolean shouldRenderClouds;
+	private final boolean oldLighting;
 
 	private final List<GbufferProgram> programStack = new ArrayList<>();
 	private final List<String> programStackLog = new ArrayList<>();
@@ -126,6 +125,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		Objects.requireNonNull(programs);
 
 		this.shouldRenderClouds = programs.getPackDirectives().areCloudsEnabled();
+		this.oldLighting = programs.getPackDirectives().isOldLighting();
 		this.updateNotifier = new FrameUpdateNotifier();
 
 		this.allPasses = new ArrayList<>();
@@ -135,6 +135,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 		this.sunPathRotation = programs.getPackDirectives().getSunPathRotation();
 
 		BlockRenderingSettings.INSTANCE.setIdMap(programs.getPack().getIdMap());
+		BlockRenderingSettings.INSTANCE.setAmbientOcclusionLevel(programs.getPackDirectives().getAmbientOcclusionLevel());
 		BlockRenderingSettings.INSTANCE.setDisableDirectionalShading(shouldDisableDirectionalShading());
 		BlockRenderingSettings.INSTANCE.setUseSeparateAo(programs.getPackDirectives().shouldUseSeparateAo());
 
@@ -432,7 +433,7 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 
 	@Override
 	public boolean shouldDisableDirectionalShading() {
-		return true;
+		return !oldLighting;
 	}
 
 	@Override
@@ -696,17 +697,9 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 
 	@Override
 	public void addDebugText(List<String> messages) {
-		if (shadowMapRenderer instanceof ShadowRenderer) {
+		if (shadowMapRenderer != null) {
 			messages.add("");
-			messages.add("[Iris] Shadow Maps: " + ShadowRenderer.OVERALL_DEBUG_STRING);
-			messages.add("[Iris] Shadow Terrain: " + ShadowRenderer.SHADOW_DEBUG_STRING);
-			messages.add("[Iris] Shadow Entities: " + ShadowRenderer.getEntitiesDebugString());
-			messages.add("[Iris] Shadow Block Entities: " + ShadowRenderer.getBlockEntitiesDebugString());
-		} else if (shadowMapRenderer instanceof EmptyShadowMapRenderer) {
-			messages.add("");
-			messages.add("[Iris] Shadow Maps: not used by shader pack");
-		} else {
-			throw new IllegalStateException("Unknown shadow map renderer type!");
+			shadowMapRenderer.addDebugText(messages);
 		}
 	}
 
