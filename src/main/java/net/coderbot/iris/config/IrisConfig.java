@@ -1,3 +1,4 @@
+
 package net.coderbot.iris.config;
 
 import com.google.common.collect.ImmutableList;
@@ -13,7 +14,6 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import net.coderbot.iris.gui.option.IrisVideoSettings;
 
 /**
  * A class dedicated to storing the config values of shaderpacks.
@@ -169,6 +170,12 @@ public class IrisConfig {
 	public void read(Properties properties) {
 		shaderPackName = properties.getProperty("shaderPack", this.shaderPackName);
 		enableShaders = Boolean.parseBoolean(properties.getProperty("enableShaders", String.valueOf(this.enableShaders)));
+		try {
+			IrisVideoSettings.shadowDistance = Integer.parseInt(properties.getProperty("maxShadowRenderDistance", "32"));
+		} catch (NumberFormatException e) {
+			Iris.logger.error("Shadow distance setting reset; value is invalid.");
+			IrisVideoSettings.shadowDistance = 32;
+		}
 		uiTheme = properties.getProperty("uiTheme", this.uiTheme);
 		condenseShaderConfig = Boolean.parseBoolean(properties.getProperty("condenseShaderConfig", String.valueOf(this.condenseShaderConfig)));
 		scrollSpeed = Integer.parseInt(properties.getProperty("scrollSpeed", String.valueOf(this.scrollSpeed)));
@@ -190,6 +197,7 @@ public class IrisConfig {
 
 		properties.setProperty("shaderPack", getShaderPackName().orElse(""));
 		properties.setProperty("enableShaders", Boolean.toString(areShadersEnabled()));
+		properties.setProperty("maxShadowRenderDistance", String.valueOf(IrisVideoSettings.shadowDistance));
 		properties.setProperty("uiTheme", getUITheme().name());
 		properties.setProperty("condenseShaderConfig", Boolean.toString(getIfCondensedShaderConfig()));
 		properties.setProperty("scrollSpeed", Integer.toString(getScrollSpeed()));
