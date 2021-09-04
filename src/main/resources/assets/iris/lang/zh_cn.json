@@ -8,6 +8,23 @@
   "iris.shaders.reloaded.failure": "重新加载光影失败！原因：%s",
   "iris.shaders.toggled.failure": "切换光影失败！原因：%s",
 
+  "option.iris.back": "返回",
+  "option.iris.profile": "配置",
+
+  "page.iris.notFound": "页面未找到",
+  "page.iris.invalid": "无效的页面: \"%s\"",
+  "page.iris.noConfig": "没有光影包选项",
+  "page.iris.noShaders": "未加载光影包",
+
+  "property.iris.boolean.true": "启用",
+  "property.iris.boolean.false": "禁用",
+  "property.iris.title.configScreen": "配置 Iris",
+  "property.iris.uiTheme": "界面主题",
+  "property.iris.condenseShaderConfig": "压缩光影包配置文件",
+  "property.iris.scrollSpeed": "滚动速度",
+
+  "tooltip.iris.config": "配置 Iris",
+
   "options.iris.apply": "应用",
   "options.iris.refresh": "刷新",
   "options.iris.openShaderPackFolder": "打开光影包文件夹...",
@@ -24,5 +41,7 @@
   "options.iris.shaders.enabled": "光影：已启用",
 
   "pack.iris.select.title": "选择",
+  "pack.iris.configure.title": "配置",
+  "pack.iris.internal": "内部光影包",
   "pack.iris.list.label": "+ 拖放光影包以添加"
 }
