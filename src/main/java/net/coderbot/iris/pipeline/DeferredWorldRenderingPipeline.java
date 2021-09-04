@@ -495,10 +495,6 @@ public class DeferredWorldRenderingPipeline implements WorldRenderingPipeline {
 
 		AlphaTestOverride alphaTestOverride = source.getDirectives().getAlphaTestOverride().orElse(null);
 
-		if (alphaTestOverride != null) {
-			Iris.logger.info("Configured alpha test override for " + source.getName() + ": " + alphaTestOverride);
-		}
-
 		Pass pass = new Pass(builder.build(), framebufferBeforeTranslucents, framebufferAfterTranslucents, alphaTestOverride,
 				source.getDirectives().shouldDisableBlend());
 
